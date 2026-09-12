@@ -7,11 +7,15 @@ import Dialog from 'primevue/dialog'
 import Select from 'primevue/select'
 import Tag from 'primevue/tag'
 import Message from 'primevue/message'
+import { useConfirm } from 'primevue/useconfirm'
+import { useToast } from 'primevue/usetoast'
 import * as api from '../lib/api'
 import type { Role, UserSummary } from '../lib/api'
 import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
+const confirm = useConfirm()
+const toast = useToast()
 const users = ref<UserSummary[]>([])
 const error = ref<string | null>(null)
 
@@ -20,6 +24,7 @@ const roleOptions: Role[] = ['USER', 'ADMIN']
 const createDialogOpen = ref(false)
 const createRole = ref<Role>('USER')
 const createdActivationKey = ref<string | null>(null)
+const copied = ref(false)
 
 async function refresh() {
   if (!auth.token) return
@@ -36,9 +41,21 @@ async function submitCreate() {
   try {
     const created = await api.createUser(auth.token, createRole.value)
     createdActivationKey.value = created.activationKey
+    copied.value = false
     await refresh()
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'failed to create user'
+  }
+}
+
+async function copyActivationKey() {
+  if (!createdActivationKey.value) return
+  try {
+    await navigator.clipboard.writeText(createdActivationKey.value)
+    copied.value = true
+    toast.add({ severity: 'success', summary: 'Copied to clipboard', life: 2000 })
+  } catch {
+    error.value = 'could not copy — select and copy manually'
   }
 }
 
@@ -56,15 +73,41 @@ async function remove(user: UserSummary) {
   if (!auth.token) return
   try {
     await api.deleteUser(auth.token, user.id)
+    toast.add({ severity: 'success', summary: 'User deleted', life: 2500 })
     await refresh()
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'failed to delete user'
   }
 }
 
+function confirmRemove(user: UserSummary) {
+  const label = user.nickname ?? '(pending activation)'
+  confirm.require({
+    header: 'Delete user',
+    message: `Delete ${label}? This can't be undone.`,
+    acceptLabel: 'Delete',
+    acceptProps: { severity: 'danger' },
+    rejectLabel: 'Cancel',
+    accept: () => remove(user),
+  })
+}
+
+function confirmRemoveRequested(user: UserSummary) {
+  const label = user.nickname ?? '(pending activation)'
+  confirm.require({
+    header: 'Confirm account deletion',
+    message: `${label} requested account deletion. Delete their account now?`,
+    acceptLabel: 'Delete account',
+    acceptProps: { severity: 'danger' },
+    rejectLabel: 'Not yet',
+    accept: () => remove(user),
+  })
+}
+
 function openCreateDialog() {
   createRole.value = 'USER'
   createdActivationKey.value = null
+  copied.value = false
   createDialogOpen.value = true
 }
 
@@ -72,37 +115,52 @@ onMounted(refresh)
 </script>
 
 <template>
-  <div class="admin">
+  <div class="page-wide stack">
     <h1>Users</h1>
     <Message v-if="error" severity="error">{{ error }}</Message>
 
     <Button label="Create user" @click="openCreateDialog" />
 
-    <DataTable :value="users" data-key="id" class="users-table">
-      <Column field="nickname" header="Nickname">
-        <template #body="{ data }">{{ data.nickname ?? '(pending activation)' }}</template>
-      </Column>
-      <Column field="role" header="Role">
-        <template #body="{ data }">
-          <Select
-            :model-value="data.role"
-            :options="roleOptions"
-            @update:model-value="(role: Role) => changeRole(data, role)"
-          />
-        </template>
-      </Column>
-      <Column field="activated" header="Activated">
-        <template #body="{ data }">
-          <Tag :severity="data.activated ? 'success' : 'warn'" :value="data.activated ? 'yes' : 'no'" />
-        </template>
-      </Column>
-      <Column field="createdAt" header="Created" />
-      <Column header="">
-        <template #body="{ data }">
-          <Button label="Delete" severity="danger" size="small" @click="remove(data)" />
-        </template>
-      </Column>
-    </DataTable>
+    <div class="table-scroll">
+      <DataTable :value="users" data-key="id" class="users-table">
+        <Column field="nickname" header="Nickname">
+          <template #body="{ data }">{{ data.nickname ?? '(pending activation)' }}</template>
+        </Column>
+        <Column field="role" header="Role">
+          <template #body="{ data }">
+            <Select
+              :model-value="data.role"
+              :options="roleOptions"
+              @update:model-value="(role: Role) => changeRole(data, role)"
+            />
+          </template>
+        </Column>
+        <Column field="activated" header="Activated">
+          <template #body="{ data }">
+            <Tag :severity="data.activated ? 'success' : 'warn'" :value="data.activated ? 'yes' : 'no'" />
+          </template>
+        </Column>
+        <Column header="Deletion">
+          <template #body="{ data }: { data: UserSummary }">
+            <Tag v-if="data.deletionRequestedAt" severity="danger" value="requested" />
+            <span v-else class="muted">—</span>
+          </template>
+        </Column>
+        <Column field="createdAt" header="Created" />
+        <Column header="">
+          <template #body="{ data }: { data: UserSummary }">
+            <Button
+              v-if="data.deletionRequestedAt"
+              label="Confirm & delete"
+              severity="danger"
+              size="small"
+              @click="confirmRemoveRequested(data)"
+            />
+            <Button v-else label="Delete" severity="danger" size="small" @click="confirmRemove(data)" />
+          </template>
+        </Column>
+      </DataTable>
+    </div>
 
     <Dialog v-model:visible="createDialogOpen" header="Create user" modal>
       <div v-if="!createdActivationKey">
@@ -112,29 +170,31 @@ onMounted(refresh)
         </div>
         <Button label="Create" @click="submitCreate" />
       </div>
-      <div v-else>
+      <div v-else class="stack">
         <p>User created. Share this activation key so they can register:</p>
-        <code>{{ createdActivationKey }}</code>
+        <div class="row">
+          <code>{{ createdActivationKey }}</code>
+          <Button
+            :label="copied ? 'Copied' : 'Copy'"
+            :icon="copied ? 'pi pi-check' : 'pi pi-copy'"
+            size="small"
+            severity="secondary"
+            @click="copyActivationKey"
+          />
+        </div>
       </div>
     </Dialog>
   </div>
 </template>
 
 <style scoped>
-.admin {
+.page-wide {
+  width: 100%;
   max-width: 60rem;
-  margin: 2rem auto;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem;
 }
-.users-table {
-  margin-top: 1rem;
-}
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  margin-bottom: 1rem;
+.table-scroll {
+  overflow-x: auto;
 }
 </style>

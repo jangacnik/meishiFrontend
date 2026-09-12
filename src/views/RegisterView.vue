@@ -32,46 +32,33 @@ async function submit() {
 </script>
 
 <template>
-  <div class="auth-form">
-    <h1>Register</h1>
-    <form @submit.prevent="submit">
-      <div class="field">
-        <label for="activationKey">Activation key</label>
-        <InputText id="activationKey" v-model="activationKey" />
-      </div>
-      <div class="field">
-        <label for="nickname">Nickname</label>
-        <InputText id="nickname" v-model="nickname" />
-      </div>
-      <div class="field">
-        <label for="password">Password</label>
-        <Password id="password" v-model="password" toggle-mask />
-      </div>
-      <Message v-if="error" severity="error">{{ error }}</Message>
-      <Button type="submit" label="Register" :loading="loading" />
-    </form>
-    <p>
-      Already registered? <RouterLink to="/login">Log in</RouterLink>
-    </p>
+  <div class="page auth-page">
+    <div class="card stack">
+      <h1>Register</h1>
+      <form class="stack" @submit.prevent="submit">
+        <div class="field">
+          <label for="activationKey">Activation key</label>
+          <InputText id="activationKey" v-model="activationKey" />
+        </div>
+        <div class="field">
+          <label for="nickname">Nickname</label>
+          <InputText id="nickname" v-model="nickname" />
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <Password id="password" v-model="password" toggle-mask fluid />
+        </div>
+        <Message v-if="error" severity="error">{{ error }}</Message>
+        <Button type="submit" label="Register" :loading="loading" fluid />
+      </form>
+      <p class="muted">Already registered? <RouterLink to="/login">Log in</RouterLink></p>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.auth-form {
-  max-width: 24rem;
-  margin: 4rem auto;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  margin-bottom: 1rem;
-}
-form {
-  display: flex;
-  flex-direction: column;
+.auth-page {
+  max-width: 26rem;
+  padding-top: 4rem;
 }
 </style>

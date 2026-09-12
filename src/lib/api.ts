@@ -6,11 +6,40 @@ export interface UserSummary {
   role: Role
   activated: boolean
   createdAt: string
+  deletionRequestedAt: string | null
 }
 
 export interface CreatedUser {
   id: string
   activationKey: string
+}
+
+export interface MeUser {
+  id: string
+  nickname: string | null
+  role: Role
+  status: 'ACTIVE' | 'FROZEN'
+  activated: boolean
+  createdAt: string
+  email: string | null
+  phone: string | null
+  firstName: string | null
+  lastName: string | null
+  addressLine1: string | null
+  addressLine2: string | null
+  postalCode: string | null
+  city: string | null
+  country: string | null
+  deletionRequestedAt: string | null
+}
+
+export interface ProfileUpdate {
+  email?: string
+  addressLine1?: string
+  addressLine2?: string
+  postalCode?: string
+  city?: string
+  country?: string
 }
 
 class ApiError extends Error {
@@ -55,6 +84,22 @@ export function register(
     method: 'POST',
     body: JSON.stringify({ activationKey, nickname, password }),
   })
+}
+
+export function getMe(token: string): Promise<MeUser> {
+  return request('/users/me', {}, token)
+}
+
+export function updateMe(token: string, fields: ProfileUpdate): Promise<MeUser> {
+  return request('/users/me', { method: 'PATCH', body: JSON.stringify(fields) }, token)
+}
+
+export function requestDeletion(token: string): Promise<MeUser> {
+  return request('/users/me/request-deletion', { method: 'POST' }, token)
+}
+
+export function cancelDeletionRequest(token: string): Promise<MeUser> {
+  return request('/users/me/request-deletion', { method: 'DELETE' }, token)
 }
 
 export function listUsers(token: string): Promise<UserSummary[]> {
