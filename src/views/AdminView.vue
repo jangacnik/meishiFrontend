@@ -153,7 +153,7 @@ onMounted(refresh)
     <h1>Users</h1>
     <Message v-if="error" severity="error">{{ error }}</Message>
 
-    <Button label="Create user" @click="openCreateDialog" />
+    <Button label="Create user" class="create-user-btn" @click="openCreateDialog" />
 
     <div class="table-scroll">
       <DataTable :value="users" data-key="id" class="users-table">
@@ -245,5 +245,8 @@ onMounted(refresh)
 }
 .table-scroll {
   overflow-x: auto;
+}
+.create-user-btn {
+  align-self: flex-start;
 }
 </style>
