@@ -12,7 +12,10 @@ const app = createApp(App)
 
 app.use(createPinia())
 app.use(router)
-app.use(PrimeVue, { theme: { preset: Aura } })
+// darkModeSelector: false - this app is deliberately light-only (washi/ink theme);
+// without this, PrimeVue auto-switches components to dark mode based on the visitor's
+// OS/browser color-scheme preference, clashing with the rest of the page's fixed palette.
+app.use(PrimeVue, { theme: { preset: Aura, options: { darkModeSelector: false } } })
 app.use(ConfirmationService)
 app.use(ToastService)
 
