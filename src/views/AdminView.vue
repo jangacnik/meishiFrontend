@@ -223,13 +223,16 @@ onMounted(refresh)
         <p>User created. Share this activation key so they can register:</p>
         <div class="row">
           <code>{{ createdActivationKey }}</code>
-          <Button
-            :label="copied ? 'Copied' : 'Copy'"
-            :icon="copied ? 'pi pi-check' : 'pi pi-copy'"
-            size="small"
-            severity="secondary"
-            @click="copyActivationKey"
-          />
+          <Button class="icon-btn" size="small" severity="secondary" @click="copyActivationKey">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path v-if="copied" d="M5 13 L9 17 L19 7" />
+              <g v-else>
+                <rect x="9" y="9" width="11" height="11" rx="2" />
+                <path d="M5 15 V5 a2 2 0 0 1 2-2 h8" />
+              </g>
+            </svg>
+            {{ copied ? 'Copied' : 'Copy' }}
+          </Button>
         </div>
       </div>
     </Dialog>

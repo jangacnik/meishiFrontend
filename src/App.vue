@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import ConfirmDialog from 'primevue/confirmdialog'
 import Toast from 'primevue/toast'
+import BrandMark from './components/BrandMark.vue'
 import { useAuthStore } from './stores/auth'
 
 const router = useRouter()
@@ -22,10 +23,7 @@ function logout() {
   <header class="nav">
     <div class="nav-bar">
       <RouterLink to="/" class="brand" @click="menuOpen = false">
-        <svg viewBox="0 0 48 48" width="24" height="24" aria-hidden="true">
-          <rect x="4" y="4" width="40" height="40" rx="6" fill="none" stroke="currentColor" stroke-width="3" />
-          <circle cx="24" cy="24" r="12" fill="var(--hanko)" />
-        </svg>
+        <BrandMark />
         Meishi
       </RouterLink>
 
@@ -33,7 +31,7 @@ function logout() {
         <template v-if="auth.isAuthenticated">
           <RouterLink v-if="auth.isAdmin" to="/admin">Admin</RouterLink>
           <span class="nickname">{{ auth.nickname }}</span>
-          <a href="#" @click.prevent="logout">Log out</a>
+          <a href="#" class="ghost" @click.prevent="logout">Log out</a>
         </template>
         <template v-else>
           <RouterLink to="/login">Log in</RouterLink>
@@ -41,19 +39,26 @@ function logout() {
         </template>
       </nav>
 
-      <button type="button" class="menu-btn" :aria-expanded="menuOpen" aria-label="Toggle menu" @click="menuOpen = !menuOpen">
+      <button
+        type="button"
+        class="menu-btn"
+        :aria-expanded="menuOpen"
+        :aria-label="menuOpen ? 'Close menu' : 'Open menu'"
+        @click="menuOpen = !menuOpen"
+      >
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-          <path v-if="menuOpen" d="M6 6 L18 18 M18 6 L6 18" />
-          <path v-else d="M4 7 H20 M4 12 H20 M4 17 H20" />
+          <path d="M4 7 H20" :class="['bar', 'bar-top', { open: menuOpen }]" />
+          <path d="M4 12 H20" :class="['bar', 'bar-mid', { open: menuOpen }]" />
+          <path d="M4 17 H20" :class="['bar', 'bar-bottom', { open: menuOpen }]" />
         </svg>
       </button>
     </div>
 
-    <nav v-if="menuOpen" class="links links-mobile">
+    <nav v-if="menuOpen" class="links links-mobile sheet-in">
       <template v-if="auth.isAuthenticated">
         <RouterLink v-if="auth.isAdmin" to="/admin" @click="menuOpen = false">Admin</RouterLink>
         <span class="nickname">{{ auth.nickname }}</span>
-        <a href="#" @click.prevent="logout">Log out</a>
+        <a href="#" class="ghost" @click.prevent="logout">Log out</a>
       </template>
       <template v-else>
         <RouterLink to="/login" @click="menuOpen = false">Log in</RouterLink>
@@ -62,35 +67,41 @@ function logout() {
     </nav>
   </header>
   <main class="main">
-    <RouterView />
+    <RouterView v-slot="{ Component, route }">
+      <component :is="Component" :key="route.path" class="rise" />
+    </RouterView>
   </main>
 </template>
 
 <style scoped>
 .nav {
-  border-bottom: 1px solid var(--line);
-  background: var(--surface);
+  background: var(--ink);
+  color: var(--ice);
   position: sticky;
   top: 0;
   z-index: 10;
 }
 .nav-bar {
-  max-width: 48rem;
+  max-width: 60rem;
   margin: 0 auto;
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 0.85rem 1.25rem;
+  padding: 0.8rem 1.25rem;
 }
 .brand {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.55rem;
   font-family: var(--font-display);
   font-weight: 700;
   font-size: 1.05rem;
-  color: var(--ink);
+  color: var(--ice);
   text-decoration: none;
+  transition: transform 0.2s var(--ease-out-soft);
+}
+.brand:hover {
+  transform: rotate(-2deg);
 }
 .links {
   display: flex;
@@ -98,16 +109,49 @@ function logout() {
   gap: 1.25rem;
 }
 .links a {
+  position: relative;
   text-decoration: none;
-  color: var(--ink-soft);
+  color: rgba(232, 241, 242, 0.65);
   font-weight: 500;
+  padding: 0.2rem 0;
+  transition: color 0.15s ease;
+}
+.links a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -0.15rem;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--mint);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.2s var(--ease-out-soft);
 }
 .links a:hover,
 .links a.router-link-active {
-  color: var(--hanko);
+  color: var(--ice);
+}
+.links a:hover::after,
+.links a.router-link-active::after {
+  transform: scaleX(1);
+}
+/* Log out is an action, not a destination — no underline, a quiet outline instead. */
+.links a.ghost {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid rgba(232, 241, 242, 0.25);
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+}
+.links a.ghost:hover {
+  background: rgba(232, 241, 242, 0.1);
+}
+.links a.ghost::after {
+  display: none;
 }
 .nickname {
-  color: var(--ink-soft);
+  color: rgba(232, 241, 242, 0.6);
   font-size: 0.9rem;
 }
 .links-desktop {
@@ -118,15 +162,38 @@ function logout() {
   margin-left: auto;
   background: none;
   border: none;
-  color: var(--ink);
+  color: var(--ice);
   padding: 0.4rem;
+  border-radius: 0.5rem;
   cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.menu-btn:hover {
+  background: rgba(232, 241, 242, 0.1);
+}
+.bar {
+  transform-origin: center;
+  transition:
+    transform 0.3s var(--ease-out-soft),
+    opacity 0.2s ease;
+}
+.bar-top.open {
+  transform: translateY(5px) rotate(45deg);
+}
+.bar-mid.open {
+  opacity: 0;
+}
+.bar-bottom.open {
+  transform: translateY(-5px) rotate(-45deg);
 }
 .links-mobile {
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0 1.25rem 1rem;
+  gap: 0.85rem;
+  padding: 0.25rem 1.25rem 1.1rem;
+  border-top: 1px solid rgba(232, 241, 242, 0.15);
+  margin-top: 0.25rem;
+  padding-top: 0.9rem;
 }
 
 .main {

@@ -5,6 +5,7 @@ import InputText from 'primevue/inputtext'
 import Password from 'primevue/password'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
+import BrandMark from '../components/BrandMark.vue'
 import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
@@ -33,8 +34,12 @@ async function submit() {
 
 <template>
   <div class="page auth-page">
-    <div class="card stack">
+    <div class="auth-head">
+      <BrandMark :size="40" />
       <h1>Register</h1>
+      <p class="muted">Activation keys come from an admin.</p>
+    </div>
+    <div class="card stack">
       <form class="stack" @submit.prevent="submit">
         <div class="field">
           <label for="activationKey">Activation key</label>
@@ -58,7 +63,21 @@ async function submit() {
 
 <style scoped>
 .auth-page {
-  max-width: 26rem;
-  padding-top: 4rem;
+  max-width: 24rem;
+  padding-top: 3.5rem;
+}
+.auth-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+.auth-head h1 {
+  margin: 0;
+}
+.auth-head .muted {
+  font-size: 0.875rem;
 }
 </style>

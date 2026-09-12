@@ -1,43 +1,116 @@
-@import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap');
-
-:root {
-  --washi: #f3ede0;
-  --surface: #fbf8f2;
-  --ink: #2b2622;
-  --ink-soft: rgba(43, 38, 34, 0.65);
-  --line: #ddd2ba;
-  --hanko: #b5342a;
-  --hanko-dark: #93281f;
-  --bamboo: #5f7a52;
+/* Doubled `:root` on purpose: PrimeVue injects its own theme variables on `:root`
+   *after* this stylesheet loads, so a plain `:root` block loses the tie on cascade
+   order and the stock emerald palette wins. The extra selector raises specificity. */
+:root:root {
+  --ice: #e8f1f2;
+  --surface: #f9fcfc;
+  --ink: #001a23;
+  --ink-soft: rgba(0, 26, 35, 0.62);
+  --line: #cfdfe1;
+  --forest: #31493c;
+  --forest-deep: #20322a;
+  --sage: #7a9e7e;
+  --mint: #b3efb2;
+  --clay: #9e4034;
 
   --font-display: 'Shippori Mincho', serif;
   --font-body: 'Noto Sans JP', system-ui, sans-serif;
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 
   color-scheme: light;
 
-  /* Retint PrimeVue's stock Aura theme toward the hanko/washi palette via its own
-     CSS custom properties, instead of a custom theme preset object (that route hit
-     a broken license-gated code path in @primeuix/themes and unreadable inputs).
-     !important is required here: PrimeVue injects its own `:root, :host { ... }`
-     stylesheet at runtime, after this one, at equal specificity — without
-     !important its emerald default (--p-primary-500: #10b981) wins on load order
-     alone, which is why every primary-colored control (submit buttons, active nav
-     tab, etc.) was rendering PrimeVue's green instead of this palette. */
-  --p-primary-50: #fdf1ef !important;
-  --p-primary-100: #f9dad4 !important;
-  --p-primary-200: #f2b5a9 !important;
-  --p-primary-300: #e8907d !important;
-  --p-primary-400: #d96652 !important;
-  --p-primary-500: #b5342a !important;
-  --p-primary-600: #932c24 !important;
-  --p-primary-700: #78241d !important;
-  --p-primary-800: #611d18 !important;
-  --p-primary-900: #4f1814 !important;
-  --p-primary-950: #2c0c0a !important;
-  --p-primary-color: var(--p-primary-500) !important;
-  --p-primary-contrast-color: #fbf8f2 !important;
-  --p-primary-hover-color: var(--p-primary-600) !important;
-  --p-primary-active-color: var(--p-primary-700) !important;
+  /* Retint PrimeVue's stock Aura theme via its own CSS custom properties, instead of a
+     custom theme preset object (that route hit a broken license-gated code path in
+     @primeuix/themes and unreadable inputs). */
+  --p-primary-50: #eef4f0;
+  --p-primary-100: #d6e5da;
+  --p-primary-200: #adc9b6;
+  --p-primary-300: #84ad93;
+  --p-primary-400: #5b8570;
+  --p-primary-500: #31493c;
+  --p-primary-600: #2a3f34;
+  --p-primary-700: #22342b;
+  --p-primary-800: #1a2822;
+  --p-primary-900: #121c18;
+  --p-primary-950: #0a100e;
+  --p-primary-color: var(--p-primary-500);
+  --p-primary-contrast-color: #f9fcfc;
+  --p-primary-hover-color: var(--p-primary-600);
+  --p-primary-active-color: var(--p-primary-700);
+
+  /* Aura's stock surface ramp is a cool slate grey; these are the same steps pulled
+     toward the ice/abyss end of the palette so panels, inputs and tables sit on it. */
+  --p-surface-0: #ffffff;
+  --p-surface-50: #f4f9fa;
+  --p-surface-100: #e8f1f2;
+  --p-surface-200: #d2e0e2;
+  --p-surface-300: #b6cace;
+  --p-surface-400: #8fa8ad;
+  --p-surface-500: #6b868c;
+  --p-surface-600: #4f666c;
+  --p-surface-700: #3a4f55;
+  --p-surface-800: #23383e;
+  --p-surface-900: #0d232b;
+  --p-surface-950: #001a23;
+  --p-content-background: var(--surface);
+  --p-content-border-color: var(--line);
+  --p-text-color: var(--ink);
+  --p-text-muted-color: var(--ink-soft);
+  --p-anchor-gutter: 0.25rem;
+
+  /* Aura hard-codes its severity colours (emerald/red/orange) rather than reading them
+     from a ramp variable, so each token a component here actually uses is restated.
+     Danger becomes clay and warn a muted ochre: the palette is all greens, and a freeze
+     or a delete has to stay legible as "stop" next to a success tag. */
+  --p-tag-success-background: #d9f5d8;
+  --p-tag-success-color: #22342b;
+  --p-tag-danger-background: #f6e4e1;
+  --p-tag-danger-color: #7a2e24;
+  --p-tag-warn-background: #f6ecd9;
+  --p-tag-warn-color: #7a5420;
+
+  --p-button-danger-background: #9e4034;
+  --p-button-danger-border-color: #9e4034;
+  --p-button-danger-color: #ffffff;
+  --p-button-danger-hover-background: #8a372c;
+  --p-button-danger-hover-border-color: #8a372c;
+  --p-button-danger-hover-color: #ffffff;
+  --p-button-danger-active-background: #722d24;
+  --p-button-danger-active-border-color: #722d24;
+  --p-button-danger-active-color: #ffffff;
+  --p-button-danger-focus-ring-color: #9e4034;
+  --p-button-outlined-danger-color: #9e4034;
+  --p-button-outlined-danger-border-color: #e0c2bc;
+  --p-button-outlined-danger-hover-background: #fbf0ee;
+  --p-button-outlined-danger-active-background: #f6e4e1;
+
+  --p-button-warn-background: #a9762f;
+  --p-button-warn-border-color: #a9762f;
+  --p-button-warn-color: #ffffff;
+  --p-button-warn-hover-background: #8f6427;
+  --p-button-warn-hover-border-color: #8f6427;
+  --p-button-warn-hover-color: #ffffff;
+  --p-button-warn-active-background: #75521f;
+  --p-button-warn-active-border-color: #75521f;
+  --p-button-warn-active-color: #ffffff;
+  --p-button-warn-focus-ring-color: #a9762f;
+
+  --p-message-error-background: #fbf0ee;
+  --p-message-error-border-color: #e6c9c3;
+  --p-message-error-color: #8a372c;
+  --p-message-error-simple-color: #8a372c;
+  --p-message-error-shadow: 0 1px 2px rgba(0, 26, 35, 0.05);
+  --p-message-error-close-button-hover-background: #f6e4e1;
+  --p-message-error-close-button-focus-ring-color: #9e4034;
+
+  --p-toast-success-background: #edf9ed;
+  --p-toast-success-border-color: #b3efb2;
+  --p-toast-success-color: #22342b;
+  --p-toast-success-shadow: 0 4px 12px rgba(0, 26, 35, 0.12);
+  --p-toast-info-background: #eef4f5;
+  --p-toast-info-border-color: #cfdfe1;
+  --p-toast-info-color: #31493c;
+  --p-toast-info-shadow: 0 4px 12px rgba(0, 26, 35, 0.12);
 }
 
 * {
@@ -51,17 +124,41 @@ body {
 }
 
 body {
-  background: var(--washi);
+  background: var(--ice);
   color: var(--ink);
   font-family: var(--font-body);
   font-size: 16px;
   line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Paper grain — keeps the flat palette from reading as a sterile template fill. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.4;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
 }
 
 #app {
+  position: relative;
+  z-index: 1;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+::selection {
+  background: var(--mint);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--forest);
+  outline-offset: 2px;
 }
 
 h1,
@@ -71,14 +168,15 @@ h3 {
   font-weight: 700;
   color: var(--ink);
   margin: 0 0 0.5rem;
+  letter-spacing: -0.01em;
 }
 
 h1 {
-  font-size: 1.75rem;
+  font-size: clamp(1.6rem, 1.3rem + 1.2vw, 2.1rem);
 }
 
 a {
-  color: var(--hanko);
+  color: var(--forest);
 }
 
 /* Shared layout primitives, used across views */
@@ -87,15 +185,15 @@ a {
   width: 100%;
   max-width: 40rem;
   margin: 0 auto;
-  padding: 2rem 1.25rem;
+  padding: 2rem 1.25rem 3rem;
 }
 
 .card {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 0.75rem;
+  border-radius: 0.85rem;
   padding: 1.25rem;
-  box-shadow: 0 1px 2px rgba(43, 38, 34, 0.06);
+  box-shadow: 0 1px 2px rgba(0, 26, 35, 0.05);
 }
 
 .field {
@@ -133,16 +231,87 @@ a {
   color: var(--ink-soft);
 }
 
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.1rem 0.6rem;
+  border-radius: 999px;
+  background: var(--mint);
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* Buttons whose content is a slot rather than label+icon props don't get Aura's gap. */
+.icon-btn {
+  gap: 0.45rem;
+}
+
 .error-text {
-  color: var(--hanko);
+  color: var(--clay);
   font-size: 0.875rem;
 }
 
 code {
   font-family: ui-monospace, Consolas, monospace;
-  background: var(--washi);
+  background: var(--ice);
   border: 1px solid var(--line);
   border-radius: 0.375rem;
   padding: 0.35rem 0.6rem;
   font-size: 0.9rem;
+  word-break: break-all;
+}
+
+/* Motion */
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.rise {
+  animation: rise 0.45s var(--ease-out-soft) both;
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.sheet-in {
+  animation: sheet-in 0.22s var(--ease-out-soft) both;
+}
+
+.p-button {
+  transition:
+    background-color 0.15s ease,
+    transform 0.12s var(--ease-out-soft);
+}
+
+.p-button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
