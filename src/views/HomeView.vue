@@ -90,8 +90,10 @@ onMounted(load)
 
 <template>
   <div class="page stack">
-    <h1>Welcome, {{ auth.nickname }}</h1>
-    <p class="muted">Role: {{ auth.claims?.role }}</p>
+    <header class="page-head">
+      <h1>Welcome, {{ auth.nickname }}</h1>
+      <span class="pill">{{ auth.claims?.role }}</span>
+    </header>
 
     <div class="card shop-cta">
       <div>
@@ -99,7 +101,12 @@ onMounted(load)
         <p class="muted">Omiyage is where you browse and request souvenirs to bring back.</p>
       </div>
       <a href="https://omiyage.gacnikhome.duckdns.org" target="_blank" rel="noopener">
-        <Button label="Shop at Omiyage" icon="pi pi-arrow-up-right" icon-pos="right" />
+        <Button class="icon-btn">
+          Shop at Omiyage
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M8 16 L16 8 M9 8 H16 V15" />
+          </svg>
+        </Button>
       </a>
     </div>
 
@@ -157,14 +164,39 @@ onMounted(load)
 </template>
 
 <style scoped>
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+.page-head h1 {
+  margin: 0;
+}
 .shop-cta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  background: var(--forest);
+  border-color: var(--forest-deep);
+  color: var(--ice);
 }
 .shop-cta h2 {
   margin-bottom: 0.15rem;
+  color: var(--mint);
+}
+.shop-cta .muted {
+  color: rgba(232, 241, 242, 0.72);
+}
+.shop-cta :deep(.p-button) {
+  background: var(--mint);
+  border-color: var(--mint);
+  color: var(--ink);
+}
+.shop-cta :deep(.p-button:hover) {
+  background: #9fe79e;
+  border-color: #9fe79e;
 }
 </style>
