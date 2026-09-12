@@ -14,6 +14,25 @@
   --font-body: 'Noto Sans JP', system-ui, sans-serif;
 
   color-scheme: light;
+
+  /* Retint PrimeVue's stock Aura theme toward the hanko/washi palette via its own
+     CSS custom properties, instead of a custom theme preset object (that route hit
+     a broken license-gated code path in @primeuix/themes and unreadable inputs). */
+  --p-primary-50: #fdf1ef;
+  --p-primary-100: #f9dad4;
+  --p-primary-200: #f2b5a9;
+  --p-primary-300: #e8907d;
+  --p-primary-400: #d96652;
+  --p-primary-500: #b5342a;
+  --p-primary-600: #932c24;
+  --p-primary-700: #78241d;
+  --p-primary-800: #611d18;
+  --p-primary-900: #4f1814;
+  --p-primary-950: #2c0c0a;
+  --p-primary-color: var(--p-primary-500);
+  --p-primary-contrast-color: #fbf8f2;
+  --p-primary-hover-color: var(--p-primary-600);
+  --p-primary-active-color: var(--p-primary-700);
 }
 
 * {
