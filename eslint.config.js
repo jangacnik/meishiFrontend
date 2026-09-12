@@ -17,4 +17,12 @@ export default tseslint.config(
       },
     },
   },
+  {
+    // TypeScript already catches undefined identifiers (and does it more accurately,
+    // e.g. it understands DOM globals like `navigator`/`window`) — typescript-eslint's
+    // own docs recommend turning this off rather than hand-listing browser globals.
+    rules: {
+      'no-undef': 'off',
+    },
+  },
 )
