@@ -6,6 +6,7 @@ import Message from 'primevue/message'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import * as api from '../lib/api'
+import { ApiError } from '../lib/api'
 import type { MeUser } from '../lib/api'
 import AppIcon from '../components/AppIcon.vue'
 import { useAuthStore } from '../stores/auth'
@@ -24,6 +25,17 @@ const addressLine2 = ref('')
 const postalCode = ref('')
 const city = ref('')
 const country = ref('')
+
+const editingNickname = ref(false)
+const nicknameInput = ref('')
+const nicknameError = ref<string | null>(null)
+const savingNickname = ref(false)
+
+const currentPassword = ref('')
+const newPassword = ref('')
+const confirmPassword = ref('')
+const passwordError = ref<string | null>(null)
+const changingPassword = ref(false)
 
 function applyToForm(user: MeUser) {
   email.value = user.email ?? ''
@@ -65,6 +77,64 @@ async function save() {
   }
 }
 
+function startEditNickname() {
+  nicknameInput.value = auth.nickname ?? ''
+  nicknameError.value = null
+  editingNickname.value = true
+}
+
+function cancelEditNickname() {
+  editingNickname.value = false
+  nicknameError.value = null
+}
+
+async function saveNickname() {
+  if (!auth.token) return
+  savingNickname.value = true
+  nicknameError.value = null
+  try {
+    await api.updateMyNickname(auth.token, nicknameInput.value)
+    auth.setNickname(nicknameInput.value)
+    editingNickname.value = false
+    toast.add({ severity: 'success', summary: 'Nickname updated', life: 3000 })
+  } catch (e) {
+    nicknameError.value =
+      e instanceof ApiError && e.status === 409
+        ? 'that nickname is already taken'
+        : e instanceof Error
+          ? e.message
+          : 'failed to update nickname'
+  } finally {
+    savingNickname.value = false
+  }
+}
+
+async function changePassword() {
+  if (!auth.token) return
+  passwordError.value = null
+  if (newPassword.value !== confirmPassword.value) {
+    passwordError.value = 'new passwords do not match'
+    return
+  }
+  changingPassword.value = true
+  try {
+    await api.changeMyPassword(auth.token, currentPassword.value, newPassword.value)
+    currentPassword.value = ''
+    newPassword.value = ''
+    confirmPassword.value = ''
+    toast.add({ severity: 'success', summary: 'Password changed', life: 3000 })
+  } catch (e) {
+    passwordError.value =
+      e instanceof ApiError && e.status === 401
+        ? 'current password is incorrect'
+        : e instanceof Error
+          ? e.message
+          : 'failed to change password'
+  } finally {
+    changingPassword.value = false
+  }
+}
+
 function confirmRequestDeletion() {
   confirm.require({
     header: 'Request account deletion',
@@ -92,9 +162,24 @@ onMounted(load)
 <template>
   <div class="page stack">
     <header class="page-head">
-      <h1>Welcome, {{ auth.nickname }}</h1>
+      <template v-if="editingNickname">
+        <InputText v-model="nicknameInput" placeholder="Nickname" @keyup.enter="saveNickname" />
+        <Button class="icon-btn" size="small" :loading="savingNickname" @click="saveNickname">
+          <AppIcon name="check" :size="14" />
+        </Button>
+        <Button class="icon-btn" size="small" severity="secondary" outlined @click="cancelEditNickname">
+          <AppIcon name="x" :size="14" />
+        </Button>
+      </template>
+      <template v-else>
+        <h1>Welcome, {{ auth.nickname }}</h1>
+        <Button class="icon-btn" size="small" severity="secondary" text @click="startEditNickname">
+          <AppIcon name="pencil" :size="14" />
+        </Button>
+      </template>
       <span class="pill">{{ auth.claims?.role }}</span>
     </header>
+    <Message v-if="nicknameError" severity="error">{{ nicknameError }}</Message>
 
     <div class="card shop-cta">
       <div>
@@ -143,6 +228,26 @@ onMounted(load)
       </div>
 
       <Button type="submit" label="Save changes" :loading="saving" />
+    </form>
+
+    <form class="card" @submit.prevent="changePassword">
+      <h2>Change password</h2>
+      <Message v-if="passwordError" severity="error">{{ passwordError }}</Message>
+
+      <div class="field">
+        <label for="currentPassword">Current password</label>
+        <InputText id="currentPassword" v-model="currentPassword" type="password" />
+      </div>
+      <div class="field">
+        <label for="newPassword">New password</label>
+        <InputText id="newPassword" v-model="newPassword" type="password" />
+      </div>
+      <div class="field">
+        <label for="confirmPassword">Confirm new password</label>
+        <InputText id="confirmPassword" v-model="confirmPassword" type="password" />
+      </div>
+
+      <Button type="submit" label="Change password" :loading="changingPassword" />
     </form>
 
     <div class="card">

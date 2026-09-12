@@ -52,5 +52,9 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem(STORAGE_KEY)
   }
 
-  return { token, claims, isAuthenticated, isAdmin, nickname, login, register, logout }
+  function setNickname(newNickname: string) {
+    if (claims.value) claims.value = { ...claims.value, nickname: newNickname }
+  }
+
+  return { token, claims, isAuthenticated, isAdmin, nickname, login, register, logout, setNickname }
 })

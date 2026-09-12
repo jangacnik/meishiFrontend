@@ -44,7 +44,7 @@ export interface ProfileUpdate {
   country?: string
 }
 
-class ApiError extends Error {
+export class ApiError extends Error {
   status: number
 
   constructor(message: string, status: number) {
@@ -122,4 +122,37 @@ export function updateUserStatus(token: string, id: string, status: Status): Pro
 
 export function deleteUser(token: string, id: string): Promise<void> {
   return request(`/users/${id}`, { method: 'DELETE' }, token)
+}
+
+export function updateMyNickname(token: string, nickname: string): Promise<MeUser> {
+  return request('/users/me/nickname', { method: 'PATCH', body: JSON.stringify({ nickname }) }, token)
+}
+
+export function changeMyPassword(token: string, oldPassword: string, newPassword: string): Promise<void> {
+  return request(
+    '/users/me/password',
+    { method: 'PATCH', body: JSON.stringify({ oldPassword, newPassword }) },
+    token,
+  )
+}
+
+export interface AdminProfileUpdate {
+  nickname?: string
+  email?: string
+  phone?: string
+  firstName?: string
+  lastName?: string
+  addressLine1?: string
+  addressLine2?: string
+  postalCode?: string
+  city?: string
+  country?: string
+}
+
+export function adminUpdateUser(token: string, id: string, fields: AdminProfileUpdate): Promise<MeUser> {
+  return request(`/users/${id}/profile`, { method: 'PATCH', body: JSON.stringify(fields) }, token)
+}
+
+export function adminSetPassword(token: string, id: string, newPassword: string): Promise<void> {
+  return request(`/users/${id}/password`, { method: 'PATCH', body: JSON.stringify({ newPassword }) }, token)
 }
