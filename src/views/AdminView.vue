@@ -11,6 +11,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import * as api from '../lib/api'
 import type { Role, UserSummary } from '../lib/api'
+import AppIcon from '../components/AppIcon.vue'
 import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
@@ -97,7 +98,7 @@ function confirmFreeze(user: UserSummary) {
     header: 'Freeze account',
     message: `Freeze ${label}? They won't be able to log in to Meishi or Omiyage until unfrozen.`,
     acceptLabel: 'Freeze',
-    acceptProps: { severity: 'danger' },
+    acceptProps: { severity: 'info' },
     rejectLabel: 'Cancel',
     accept: () => freeze(user),
   })
@@ -138,6 +139,12 @@ function confirmRemoveRequested(user: UserSummary) {
   })
 }
 
+// Frozen accounts get a frost-coloured edge so the state reads down the table, not
+// just in the Status column.
+function rowClass(data: UserSummary) {
+  return data.status === 'FROZEN' ? 'row-frozen' : ''
+}
+
 function openCreateDialog() {
   createRole.value = 'USER'
   createdActivationKey.value = null
@@ -153,10 +160,13 @@ onMounted(refresh)
     <h1>Users</h1>
     <Message v-if="error" severity="error">{{ error }}</Message>
 
-    <Button label="Create user" class="create-user-btn" @click="openCreateDialog" />
+    <Button class="icon-btn create-user-btn" @click="openCreateDialog">
+      <AppIcon name="user-plus" :size="15" />
+      Create user
+    </Button>
 
     <div class="table-scroll">
-      <DataTable :value="users" data-key="id" class="users-table">
+      <DataTable :value="users" data-key="id" class="users-table" :row-class="rowClass">
         <Column field="nickname" header="Nickname">
           <template #body="{ data }">{{ data.nickname ?? '(pending activation)' }}</template>
         </Column>
@@ -171,7 +181,10 @@ onMounted(refresh)
         </Column>
         <Column field="status" header="Status">
           <template #body="{ data }: { data: UserSummary }">
-            <Tag :severity="data.status === 'FROZEN' ? 'danger' : 'success'" :value="data.status" />
+            <Tag :severity="data.status === 'FROZEN' ? 'info' : 'success'">
+              <AppIcon v-if="data.status === 'FROZEN'" name="snowflake" :size="12" />
+              {{ data.status }}
+            </Tag>
           </template>
         </Column>
         <Column field="activated" header="Activated">
@@ -181,7 +194,10 @@ onMounted(refresh)
         </Column>
         <Column header="Deletion">
           <template #body="{ data }: { data: UserSummary }">
-            <Tag v-if="data.deletionRequestedAt" severity="danger" value="requested" />
+            <Tag v-if="data.deletionRequestedAt" severity="danger">
+              <AppIcon name="trash" :size="12" />
+              requested
+            </Tag>
             <span v-else class="muted">—</span>
           </template>
         </Column>
@@ -191,20 +207,33 @@ onMounted(refresh)
             <div class="row">
               <Button
                 v-if="data.status === 'FROZEN'"
-                label="Unfreeze"
-                severity="secondary"
+                class="icon-btn"
+                severity="info"
                 size="small"
+                outlined
                 @click="unfreeze(data)"
-              />
-              <Button v-else label="Freeze" severity="warn" size="small" @click="confirmFreeze(data)" />
+              >
+                <AppIcon name="sun" :size="13" />
+                Unfreeze
+              </Button>
+              <Button v-else class="icon-btn" severity="info" size="small" @click="confirmFreeze(data)">
+                <AppIcon name="snowflake" :size="13" />
+                Freeze
+              </Button>
               <Button
                 v-if="data.deletionRequestedAt"
-                label="Confirm & delete"
+                class="icon-btn"
                 severity="danger"
                 size="small"
                 @click="confirmRemoveRequested(data)"
-              />
-              <Button v-else label="Delete" severity="danger" size="small" @click="confirmRemove(data)" />
+              >
+                <AppIcon name="trash" :size="13" />
+                Confirm &amp; delete
+              </Button>
+              <Button v-else class="icon-btn" severity="danger" size="small" @click="confirmRemove(data)">
+                <AppIcon name="trash" :size="13" />
+                Delete
+              </Button>
             </div>
           </template>
         </Column>
@@ -217,20 +246,17 @@ onMounted(refresh)
           <label for="role">Role</label>
           <Select id="role" v-model="createRole" :options="roleOptions" />
         </div>
-        <Button label="Create" @click="submitCreate" />
+        <Button class="icon-btn" @click="submitCreate">
+          <AppIcon name="user-plus" :size="15" />
+          Create
+        </Button>
       </div>
       <div v-else class="stack">
         <p>User created. Share this activation key so they can register:</p>
         <div class="row">
           <code>{{ createdActivationKey }}</code>
           <Button class="icon-btn" size="small" severity="secondary" @click="copyActivationKey">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path v-if="copied" d="M5 13 L9 17 L19 7" />
-              <g v-else>
-                <rect x="9" y="9" width="11" height="11" rx="2" />
-                <path d="M5 15 V5 a2 2 0 0 1 2-2 h8" />
-              </g>
-            </svg>
+            <AppIcon :name="copied ? 'check' : 'copy'" />
             {{ copied ? 'Copied' : 'Copy' }}
           </Button>
         </div>
@@ -251,5 +277,11 @@ onMounted(refresh)
 }
 .create-user-btn {
   align-self: flex-start;
+}
+.users-table :deep(.row-frozen) > td {
+  background: #f4f8fc;
+}
+.users-table :deep(.row-frozen) > td:first-child {
+  box-shadow: inset 3px 0 0 0 var(--frost);
 }
 </style>
