@@ -69,6 +69,40 @@ async function changeRole(user: UserSummary, role: Role) {
   }
 }
 
+async function freeze(user: UserSummary) {
+  if (!auth.token) return
+  try {
+    await api.updateUserStatus(auth.token, user.id, 'FROZEN')
+    toast.add({ severity: 'success', summary: 'Account frozen', life: 2500 })
+    await refresh()
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'failed to freeze account'
+  }
+}
+
+async function unfreeze(user: UserSummary) {
+  if (!auth.token) return
+  try {
+    await api.updateUserStatus(auth.token, user.id, 'ACTIVE')
+    toast.add({ severity: 'success', summary: 'Account unfrozen', life: 2500 })
+    await refresh()
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'failed to unfreeze account'
+  }
+}
+
+function confirmFreeze(user: UserSummary) {
+  const label = user.nickname ?? '(pending activation)'
+  confirm.require({
+    header: 'Freeze account',
+    message: `Freeze ${label}? They won't be able to log in to Meishi or Omiyage until unfrozen.`,
+    acceptLabel: 'Freeze',
+    acceptProps: { severity: 'danger' },
+    rejectLabel: 'Cancel',
+    accept: () => freeze(user),
+  })
+}
+
 async function remove(user: UserSummary) {
   if (!auth.token) return
   try {
@@ -135,6 +169,11 @@ onMounted(refresh)
             />
           </template>
         </Column>
+        <Column field="status" header="Status">
+          <template #body="{ data }: { data: UserSummary }">
+            <Tag :severity="data.status === 'FROZEN' ? 'danger' : 'success'" :value="data.status" />
+          </template>
+        </Column>
         <Column field="activated" header="Activated">
           <template #body="{ data }">
             <Tag :severity="data.activated ? 'success' : 'warn'" :value="data.activated ? 'yes' : 'no'" />
@@ -149,14 +188,24 @@ onMounted(refresh)
         <Column field="createdAt" header="Created" />
         <Column header="">
           <template #body="{ data }: { data: UserSummary }">
-            <Button
-              v-if="data.deletionRequestedAt"
-              label="Confirm & delete"
-              severity="danger"
-              size="small"
-              @click="confirmRemoveRequested(data)"
-            />
-            <Button v-else label="Delete" severity="danger" size="small" @click="confirmRemove(data)" />
+            <div class="row">
+              <Button
+                v-if="data.status === 'FROZEN'"
+                label="Unfreeze"
+                severity="secondary"
+                size="small"
+                @click="unfreeze(data)"
+              />
+              <Button v-else label="Freeze" severity="warn" size="small" @click="confirmFreeze(data)" />
+              <Button
+                v-if="data.deletionRequestedAt"
+                label="Confirm & delete"
+                severity="danger"
+                size="small"
+                @click="confirmRemoveRequested(data)"
+              />
+              <Button v-else label="Delete" severity="danger" size="small" @click="confirmRemove(data)" />
+            </div>
           </template>
         </Column>
       </DataTable>

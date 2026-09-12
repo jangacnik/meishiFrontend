@@ -1,9 +1,11 @@
 export type Role = 'USER' | 'ADMIN'
+export type Status = 'ACTIVE' | 'FROZEN'
 
 export interface UserSummary {
   id: string
   nickname: string | null
   role: Role
+  status: Status
   activated: boolean
   createdAt: string
   deletionRequestedAt: string | null
@@ -112,6 +114,10 @@ export function createUser(token: string, role: Role): Promise<CreatedUser> {
 
 export function updateUserRole(token: string, id: string, role: Role): Promise<void> {
   return request(`/users/${id}`, { method: 'PATCH', body: JSON.stringify({ role }) }, token)
+}
+
+export function updateUserStatus(token: string, id: string, status: Status): Promise<void> {
+  return request(`/users/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }, token)
 }
 
 export function deleteUser(token: string, id: string): Promise<void> {
