@@ -7,6 +7,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import * as api from '../lib/api'
 import type { MeUser } from '../lib/api'
+import AppIcon from '../components/AppIcon.vue'
 import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
@@ -103,9 +104,7 @@ onMounted(load)
       <a href="https://omiyage.gacnikhome.duckdns.org" target="_blank" rel="noopener">
         <Button class="icon-btn">
           Shop at Omiyage
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M8 16 L16 8 M9 8 H16 V15" />
-          </svg>
+          <AppIcon name="arrow-up-right" :size="15" />
         </Button>
       </a>
     </div>
@@ -153,11 +152,17 @@ onMounted(load)
           You requested deletion on {{ new Date(me.deletionRequestedAt).toLocaleDateString() }}. An admin will review
           it.
         </p>
-        <Button label="Cancel request" severity="secondary" @click="cancelRequest" />
+        <Button class="icon-btn" severity="secondary" @click="cancelRequest">
+          <AppIcon name="undo" :size="15" />
+          Cancel request
+        </Button>
       </template>
       <template v-else>
         <p class="field-hint">This flags your account for an admin to review and delete — it isn't instant.</p>
-        <Button label="Request account deletion" severity="danger" outlined @click="confirmRequestDeletion" />
+        <Button class="icon-btn" severity="danger" outlined @click="confirmRequestDeletion">
+          <AppIcon name="trash" :size="15" />
+          Request account deletion
+        </Button>
       </template>
     </div>
   </div>

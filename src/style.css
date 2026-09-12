@@ -11,7 +11,8 @@
   --forest-deep: #20322a;
   --sage: #7a9e7e;
   --mint: #b3efb2;
-  --clay: #9e4034;
+  --danger: #c92a2a;
+  --frost: #2b6cb0;
 
   --font-display: 'Shippori Mincho', serif;
   --font-body: 'Noto Sans JP', system-ui, sans-serif;
@@ -60,29 +61,46 @@
 
   /* Aura hard-codes its severity colours (emerald/red/orange) rather than reading them
      from a ramp variable, so each token a component here actually uses is restated.
-     Danger becomes clay and warn a muted ochre: the palette is all greens, and a freeze
-     or a delete has to stay legible as "stop" next to a success tag. */
+     The palette is all greens, so destructive and freeze actions get their own hues:
+     delete is a true red, freeze is a cold blue carried on Aura's `info` severity. */
   --p-tag-success-background: #d9f5d8;
   --p-tag-success-color: #22342b;
-  --p-tag-danger-background: #f6e4e1;
-  --p-tag-danger-color: #7a2e24;
+  --p-tag-danger-background: #fbeaea;
+  --p-tag-danger-color: #8f1c1c;
   --p-tag-warn-background: #f6ecd9;
   --p-tag-warn-color: #7a5420;
+  --p-tag-info-background: #e4eefa;
+  --p-tag-info-color: #1e4d7d;
 
-  --p-button-danger-background: #9e4034;
-  --p-button-danger-border-color: #9e4034;
+  --p-button-danger-background: #c92a2a;
+  --p-button-danger-border-color: #c92a2a;
   --p-button-danger-color: #ffffff;
-  --p-button-danger-hover-background: #8a372c;
-  --p-button-danger-hover-border-color: #8a372c;
+  --p-button-danger-hover-background: #ad2222;
+  --p-button-danger-hover-border-color: #ad2222;
   --p-button-danger-hover-color: #ffffff;
-  --p-button-danger-active-background: #722d24;
-  --p-button-danger-active-border-color: #722d24;
+  --p-button-danger-active-background: #8f1c1c;
+  --p-button-danger-active-border-color: #8f1c1c;
   --p-button-danger-active-color: #ffffff;
-  --p-button-danger-focus-ring-color: #9e4034;
-  --p-button-outlined-danger-color: #9e4034;
-  --p-button-outlined-danger-border-color: #e0c2bc;
-  --p-button-outlined-danger-hover-background: #fbf0ee;
-  --p-button-outlined-danger-active-background: #f6e4e1;
+  --p-button-danger-focus-ring-color: #c92a2a;
+  --p-button-outlined-danger-color: #c92a2a;
+  --p-button-outlined-danger-border-color: #eec6c6;
+  --p-button-outlined-danger-hover-background: #fdf3f3;
+  --p-button-outlined-danger-active-background: #fbeaea;
+
+  --p-button-info-background: #2b6cb0;
+  --p-button-info-border-color: #2b6cb0;
+  --p-button-info-color: #ffffff;
+  --p-button-info-hover-background: #245c96;
+  --p-button-info-hover-border-color: #245c96;
+  --p-button-info-hover-color: #ffffff;
+  --p-button-info-active-background: #1e4d7d;
+  --p-button-info-active-border-color: #1e4d7d;
+  --p-button-info-active-color: #ffffff;
+  --p-button-info-focus-ring-color: #2b6cb0;
+  --p-button-outlined-info-color: #2b6cb0;
+  --p-button-outlined-info-border-color: #bfd6ee;
+  --p-button-outlined-info-hover-background: #f2f7fc;
+  --p-button-outlined-info-active-background: #e4eefa;
 
   --p-button-warn-background: #a9762f;
   --p-button-warn-border-color: #a9762f;
@@ -95,21 +113,21 @@
   --p-button-warn-active-color: #ffffff;
   --p-button-warn-focus-ring-color: #a9762f;
 
-  --p-message-error-background: #fbf0ee;
-  --p-message-error-border-color: #e6c9c3;
-  --p-message-error-color: #8a372c;
-  --p-message-error-simple-color: #8a372c;
+  --p-message-error-background: #fdf3f3;
+  --p-message-error-border-color: #f0cfcf;
+  --p-message-error-color: #a3201f;
+  --p-message-error-simple-color: #a3201f;
   --p-message-error-shadow: 0 1px 2px rgba(0, 26, 35, 0.05);
-  --p-message-error-close-button-hover-background: #f6e4e1;
-  --p-message-error-close-button-focus-ring-color: #9e4034;
+  --p-message-error-close-button-hover-background: #fbeaea;
+  --p-message-error-close-button-focus-ring-color: #c92a2a;
 
   --p-toast-success-background: #edf9ed;
   --p-toast-success-border-color: #b3efb2;
   --p-toast-success-color: #22342b;
   --p-toast-success-shadow: 0 4px 12px rgba(0, 26, 35, 0.12);
-  --p-toast-info-background: #eef4f5;
-  --p-toast-info-border-color: #cfdfe1;
-  --p-toast-info-color: #31493c;
+  --p-toast-info-background: #e4eefa;
+  --p-toast-info-border-color: #bfd6ee;
+  --p-toast-info-color: #1e4d7d;
   --p-toast-info-shadow: 0 4px 12px rgba(0, 26, 35, 0.12);
 }
 
@@ -250,7 +268,7 @@ a {
 }
 
 .error-text {
-  color: var(--clay);
+  color: var(--danger);
   font-size: 0.875rem;
 }
 
