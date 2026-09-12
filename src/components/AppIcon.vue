@@ -8,6 +8,9 @@ export type IconName =
   | 'copy'
   | 'check'
   | 'arrow-up-right'
+  | 'pencil'
+  | 'x'
+  | 'key'
 
 withDefaults(defineProps<{ name: IconName; size?: number }>(), { size: 14 })
 
@@ -20,6 +23,9 @@ const PATHS: Record<IconName, string[]> = {
   copy: ['M9 9 h9 a2 2 0 0 1 2 2 v9 a2 2 0 0 1-2 2 h-9 a2 2 0 0 1-2-2 v-9 a2 2 0 0 1 2-2', 'M5 15 V5 a2 2 0 0 1 2-2 h8'],
   check: ['M5 13 L9 17 L19 7'],
   'arrow-up-right': ['M8 16 L16 8 M9 8 H16 V15'],
+  pencil: ['M4 20 L4 17 L15 6 a2.121 2.121 0 0 1 3 3 L7 20 H4', 'M13 8 L16 11'],
+  x: ['M6 6 L18 18', 'M18 6 L6 18'],
+  key: ['M15 9 a3 3 0 1 1-6 0 a3 3 0 0 1 6 0', 'M12.5 11.5 L4 20 V17 H7 V14 H10'],
 }
 </script>
 

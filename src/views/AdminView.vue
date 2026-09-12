@@ -4,13 +4,14 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
+import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
 import Tag from 'primevue/tag'
 import Message from 'primevue/message'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import * as api from '../lib/api'
-import type { Role, UserSummary } from '../lib/api'
+import type { AdminProfileUpdate, Role, UserSummary } from '../lib/api'
 import AppIcon from '../components/AppIcon.vue'
 import { useAuthStore } from '../stores/auth'
 
@@ -26,6 +27,29 @@ const createDialogOpen = ref(false)
 const createRole = ref<Role>('USER')
 const createdActivationKey = ref<string | null>(null)
 const copied = ref(false)
+
+const editDialogOpen = ref(false)
+const editUserId = ref<string | null>(null)
+const editError = ref<string | null>(null)
+const editSaving = ref(false)
+const editFields = ref({
+  nickname: '',
+  email: '',
+  phone: '',
+  firstName: '',
+  lastName: '',
+  addressLine1: '',
+  addressLine2: '',
+  postalCode: '',
+  city: '',
+  country: '',
+})
+
+const passwordDialogOpen = ref(false)
+const passwordUserId = ref<string | null>(null)
+const passwordError = ref<string | null>(null)
+const passwordSaving = ref(false)
+const newPassword = ref('')
 
 async function refresh() {
   if (!auth.token) return
@@ -152,6 +176,71 @@ function openCreateDialog() {
   createDialogOpen.value = true
 }
 
+function openEditDialog(user: UserSummary) {
+  editUserId.value = user.id
+  editError.value = null
+  editFields.value = {
+    nickname: user.nickname ?? '',
+    email: '',
+    phone: '',
+    firstName: '',
+    lastName: '',
+    addressLine1: '',
+    addressLine2: '',
+    postalCode: '',
+    city: '',
+    country: '',
+  }
+  editDialogOpen.value = true
+}
+
+async function submitEdit() {
+  if (!auth.token || !editUserId.value) return
+  editSaving.value = true
+  editError.value = null
+  try {
+    const fields: AdminProfileUpdate = {}
+    for (const [key, value] of Object.entries(editFields.value)) {
+      if (value) fields[key as keyof AdminProfileUpdate] = value
+    }
+    await api.adminUpdateUser(auth.token, editUserId.value, fields)
+    toast.add({ severity: 'success', summary: 'User updated', life: 2500 })
+    editDialogOpen.value = false
+    await refresh()
+  } catch (e) {
+    editError.value =
+      e instanceof api.ApiError && e.status === 409
+        ? 'that nickname is already taken'
+        : e instanceof Error
+          ? e.message
+          : 'failed to update user'
+  } finally {
+    editSaving.value = false
+  }
+}
+
+function openPasswordDialog(user: UserSummary) {
+  passwordUserId.value = user.id
+  passwordError.value = null
+  newPassword.value = ''
+  passwordDialogOpen.value = true
+}
+
+async function submitPassword() {
+  if (!auth.token || !passwordUserId.value) return
+  passwordSaving.value = true
+  passwordError.value = null
+  try {
+    await api.adminSetPassword(auth.token, passwordUserId.value, newPassword.value)
+    toast.add({ severity: 'success', summary: 'Password set', life: 2500 })
+    passwordDialogOpen.value = false
+  } catch (e) {
+    passwordError.value = e instanceof Error ? e.message : 'failed to set password'
+  } finally {
+    passwordSaving.value = false
+  }
+}
+
 onMounted(refresh)
 </script>
 
@@ -205,6 +294,14 @@ onMounted(refresh)
         <Column header="">
           <template #body="{ data }: { data: UserSummary }">
             <div class="row">
+              <Button class="icon-btn" severity="secondary" size="small" outlined @click="openEditDialog(data)">
+                <AppIcon name="pencil" :size="13" />
+                Edit
+              </Button>
+              <Button class="icon-btn" severity="secondary" size="small" outlined @click="openPasswordDialog(data)">
+                <AppIcon name="key" :size="13" />
+                Set password
+              </Button>
               <Button
                 v-if="data.status === 'FROZEN'"
                 class="icon-btn"
@@ -260,6 +357,74 @@ onMounted(refresh)
             {{ copied ? 'Copied' : 'Copy' }}
           </Button>
         </div>
+      </div>
+    </Dialog>
+
+    <Dialog v-model:visible="editDialogOpen" header="Edit user" modal>
+      <div class="stack">
+        <Message v-if="editError" severity="error">{{ editError }}</Message>
+        <div class="field">
+          <label for="editNickname">Nickname</label>
+          <InputText id="editNickname" v-model="editFields.nickname" />
+        </div>
+        <div class="field">
+          <label for="editEmail">Email</label>
+          <InputText id="editEmail" v-model="editFields.email" type="email" />
+        </div>
+        <div class="field">
+          <label for="editPhone">Phone</label>
+          <InputText id="editPhone" v-model="editFields.phone" />
+        </div>
+        <div class="row">
+          <div class="field" style="flex: 1">
+            <label for="editFirstName">First name</label>
+            <InputText id="editFirstName" v-model="editFields.firstName" />
+          </div>
+          <div class="field" style="flex: 1">
+            <label for="editLastName">Last name</label>
+            <InputText id="editLastName" v-model="editFields.lastName" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="editAddressLine1">Address line 1</label>
+          <InputText id="editAddressLine1" v-model="editFields.addressLine1" />
+        </div>
+        <div class="field">
+          <label for="editAddressLine2">Address line 2</label>
+          <InputText id="editAddressLine2" v-model="editFields.addressLine2" />
+        </div>
+        <div class="row">
+          <div class="field" style="flex: 1; min-width: 8rem">
+            <label for="editPostalCode">Postal code</label>
+            <InputText id="editPostalCode" v-model="editFields.postalCode" />
+          </div>
+          <div class="field" style="flex: 2; min-width: 10rem">
+            <label for="editCity">City</label>
+            <InputText id="editCity" v-model="editFields.city" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="editCountry">Country</label>
+          <InputText id="editCountry" v-model="editFields.country" />
+        </div>
+        <Button class="icon-btn" :loading="editSaving" @click="submitEdit">
+          <AppIcon name="check" :size="15" />
+          Save
+        </Button>
+      </div>
+    </Dialog>
+
+    <Dialog v-model:visible="passwordDialogOpen" header="Set password" modal>
+      <div class="stack">
+        <Message v-if="passwordError" severity="error">{{ passwordError }}</Message>
+        <div class="field">
+          <label for="newUserPassword">New password</label>
+          <InputText id="newUserPassword" v-model="newPassword" type="password" />
+        </div>
+        <Button class="icon-btn" :loading="passwordSaving" @click="submitPassword">
+          <AppIcon name="key" :size="15" />
+          Set password
+        </Button>
       </div>
     </Dialog>
   </div>
