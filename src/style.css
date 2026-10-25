@@ -267,6 +267,29 @@ a {
   gap: 0.45rem;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.skip-link {
+  position: absolute;
+  top: 0.5rem;
+  z-index: 20;
+  left: -9999px;
+  padding: 0.5rem 0.75rem;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.skip-link:focus {
+  left: 0.5rem;
+}
+
 .error-text {
   color: var(--danger);
   font-size: 0.875rem;

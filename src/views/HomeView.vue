@@ -194,6 +194,7 @@ onMounted(load)
         <InputText
           v-model="nicknameInput"
           placeholder="Nickname"
+          aria-label="Nickname"
           autocomplete="off"
           autocapitalize="off"
           autocorrect="off"
@@ -203,20 +204,20 @@ onMounted(load)
           :aria-describedby="nicknameError ? 'nickname-error' : undefined"
           @keyup.enter="saveNickname"
         />
-        <Button class="icon-btn" size="small" :loading="savingNickname" @click="saveNickname">
+        <Button class="icon-btn" size="small" aria-label="Save nickname" :loading="savingNickname" @click="saveNickname">
           <AppIcon name="check" :size="14" />
         </Button>
-        <Button class="icon-btn" size="small" severity="secondary" outlined @click="cancelEditNickname">
+        <Button class="icon-btn" size="small" severity="secondary" outlined aria-label="Cancel" @click="cancelEditNickname">
           <AppIcon name="x" :size="14" />
         </Button>
       </template>
       <template v-else>
         <h1>Welcome, {{ auth.nickname }}</h1>
-        <Button class="icon-btn" size="small" severity="secondary" text @click="startEditNickname">
+        <Button class="icon-btn" size="small" severity="secondary" text aria-label="Edit nickname" @click="startEditNickname">
           <AppIcon name="pencil" :size="14" />
         </Button>
       </template>
-      <span class="pill">{{ auth.claims?.role }}</span>
+      <span class="pill">{{ auth.isAdmin ? 'Admin' : 'Member' }}</span>
     </header>
     <Message v-if="nicknameError" id="nickname-error" severity="error">{{ nicknameError }}</Message>
 
@@ -225,12 +226,11 @@ onMounted(load)
         <h2>Ready to shop?</h2>
         <p class="muted">Omiyage is where you browse and request souvenirs to bring back.</p>
       </div>
-      <a href="https://omiyage.gacnikhome.duckdns.org" target="_blank" rel="noopener">
-        <Button class="icon-btn">
-          Shop at Omiyage
-          <AppIcon name="arrow-up-right" :size="15" />
-        </Button>
-      </a>
+      <Button as="a" class="icon-btn" href="https://omiyage.gacnikhome.duckdns.org" target="_blank" rel="noopener">
+        Shop at Omiyage
+        <span class="sr-only">(opens in new tab)</span>
+        <AppIcon name="arrow-up-right" :size="15" />
+      </Button>
     </div>
 
     <Message v-if="error" severity="error">{{ error }}</Message>

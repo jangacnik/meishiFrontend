@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, useTemplateRef } from 'vue'
 import { useRouter } from 'vue-router'
 import ConfirmDialog from 'primevue/confirmdialog'
 import Toast from 'primevue/toast'
@@ -9,6 +9,7 @@ import { useAuthStore } from './stores/auth'
 const router = useRouter()
 const auth = useAuthStore()
 const menuOpen = ref(false)
+const mainEl = useTemplateRef('main')
 
 function logout() {
   auth.logout()
@@ -20,6 +21,7 @@ function logout() {
 <template>
   <ConfirmDialog />
   <Toast />
+  <a href="#main" class="skip-link" @click.prevent="mainEl?.focus()">Skip to content</a>
   <header class="nav">
     <div class="nav-bar">
       <RouterLink to="/" class="brand" @click="menuOpen = false">
@@ -27,11 +29,11 @@ function logout() {
         Meishi
       </RouterLink>
 
-      <nav class="links links-desktop">
+      <nav class="links links-desktop" aria-label="Main">
         <template v-if="auth.isAuthenticated">
           <RouterLink v-if="auth.isAdmin" to="/admin">Admin</RouterLink>
           <span class="nickname">{{ auth.nickname }}</span>
-          <a href="#" class="ghost" @click.prevent="logout">Log out</a>
+          <button type="button" class="ghost" @click="logout">Log out</button>
         </template>
         <template v-else>
           <RouterLink to="/login">Log in</RouterLink>
@@ -54,11 +56,11 @@ function logout() {
       </button>
     </div>
 
-    <nav v-if="menuOpen" class="links links-mobile sheet-in">
+    <nav v-if="menuOpen" class="links links-mobile sheet-in" aria-label="Main">
       <template v-if="auth.isAuthenticated">
         <RouterLink v-if="auth.isAdmin" to="/admin" @click="menuOpen = false">Admin</RouterLink>
         <span class="nickname">{{ auth.nickname }}</span>
-        <a href="#" class="ghost" @click.prevent="logout">Log out</a>
+        <button type="button" class="ghost" @click="logout">Log out</button>
       </template>
       <template v-else>
         <RouterLink to="/login" @click="menuOpen = false">Log in</RouterLink>
@@ -66,7 +68,7 @@ function logout() {
       </template>
     </nav>
   </header>
-  <main class="main">
+  <main id="main" ref="main" class="main" tabindex="-1">
     <RouterView v-slot="{ Component, route }">
       <component :is="Component" :key="route.path" class="rise" />
     </RouterView>
@@ -138,18 +140,22 @@ function logout() {
   transform: scaleX(1);
 }
 /* Log out is an action, not a destination — no underline, a quiet outline instead. */
-.links a.ghost {
+.links .ghost {
+  background: none;
+  color: rgba(232, 241, 242, 0.65);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  min-height: 2.75rem;
   padding: 0.3rem 0.7rem;
   border: 1px solid rgba(232, 241, 242, 0.25);
   border-radius: 0.5rem;
   font-size: 0.9rem;
 }
-.links a.ghost:hover {
+.links .ghost:hover {
   background: rgba(232, 241, 242, 0.1);
 }
-.links a.ghost::after {
-  display: none;
-}
+
 .nickname {
   color: rgba(232, 241, 242, 0.6);
   font-size: 0.9rem;
@@ -205,6 +211,9 @@ function logout() {
 
 .main {
   flex: 1;
+}
+.main:focus {
+  outline: none;
 }
 
 @media (max-width: 640px) {
