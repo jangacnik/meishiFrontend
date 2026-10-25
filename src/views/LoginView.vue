@@ -56,7 +56,7 @@ async function submit() {
     <div class="auth-head">
       <BrandMark :size="40" />
       <h1>Log in</h1>
-      <p class="muted">Your Meishi account signs you in to Omiyage too.</p>
+      <p class="muted">Your Meishi account also signs you in to Omiyage, the souvenir shop.</p>
     </div>
     <div class="card stack">
       <form class="stack" novalidate @submit.prevent="submit">

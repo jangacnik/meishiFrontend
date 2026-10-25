@@ -32,8 +32,7 @@ const city = ref('')
 const country = ref('')
 const emailError = ref<string | null>(null)
 
-const editingNickname = ref(false)
-const nicknameInput = ref('')
+const nicknameInput = ref(auth.nickname ?? '')
 const nicknameError = ref<string | null>(null)
 const savingNickname = ref(false)
 
@@ -101,17 +100,6 @@ async function save() {
   }
 }
 
-function startEditNickname() {
-  nicknameInput.value = auth.nickname ?? ''
-  nicknameError.value = null
-  editingNickname.value = true
-}
-
-function cancelEditNickname() {
-  editingNickname.value = false
-  nicknameError.value = null
-}
-
 async function saveNickname() {
   if (!auth.token) return
   nicknameError.value = null
@@ -123,7 +111,6 @@ async function saveNickname() {
   try {
     await api.updateMyNickname(auth.token, nicknameInput.value)
     auth.setNickname(nicknameInput.value)
-    editingNickname.value = false
     toast.add({ severity: 'success', summary: 'Nickname updated', life: 3000 })
   } catch (e) {
     nicknameError.value = errorMessage(e, 'Could not update your nickname.')
@@ -196,36 +183,9 @@ onMounted(load)
 <template>
   <div class="page stack">
     <header class="page-head">
-      <template v-if="editingNickname">
-        <InputText
-          v-model="nicknameInput"
-          placeholder="Nickname"
-          aria-label="Nickname"
-          autocomplete="off"
-          autocapitalize="off"
-          autocorrect="off"
-          spellcheck="false"
-          :invalid="!!nicknameError"
-          :aria-invalid="!!nicknameError"
-          :aria-describedby="nicknameError ? 'nickname-error' : undefined"
-          @keyup.enter="saveNickname"
-        />
-        <Button class="icon-btn" size="small" aria-label="Save nickname" :loading="savingNickname" @click="saveNickname">
-          <AppIcon name="check" :size="14" />
-        </Button>
-        <Button class="icon-btn" size="small" severity="secondary" outlined aria-label="Cancel" @click="cancelEditNickname">
-          <AppIcon name="x" :size="14" />
-        </Button>
-      </template>
-      <template v-else>
-        <h1>Welcome, {{ auth.nickname }}</h1>
-        <Button class="icon-btn" size="small" severity="secondary" text aria-label="Edit nickname" @click="startEditNickname">
-          <AppIcon name="pencil" :size="14" />
-        </Button>
-      </template>
+      <h1>Welcome, {{ auth.nickname }}</h1>
       <span class="pill">{{ auth.isAdmin ? 'Admin' : 'Member' }}</span>
     </header>
-    <Message v-if="nicknameError" id="nickname-error" severity="error">{{ nicknameError }}</Message>
 
     <div class="card shop-cta">
       <div>
@@ -238,6 +198,28 @@ onMounted(load)
         <AppIcon name="arrow-up-right" :size="15" />
       </Button>
     </div>
+
+    <form class="card" novalidate @submit.prevent="saveNickname">
+      <h2>Nickname</h2>
+      <div class="field">
+        <label for="nickname">Nickname</label>
+        <InputText
+          id="nickname"
+          v-model="nicknameInput"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
+          :invalid="!!nicknameError"
+          :aria-invalid="!!nicknameError"
+          :aria-describedby="nicknameError ? 'nickname-error' : undefined"
+        />
+        <Message v-if="nicknameError" id="nickname-error" severity="error" size="small" variant="simple">
+          {{ nicknameError }}
+        </Message>
+      </div>
+      <Button type="submit" label="Save nickname" :loading="savingNickname" />
+    </form>
 
     <p v-if="loading" class="muted">Loading profile...</p>
     <Message v-else-if="loadError" severity="error">

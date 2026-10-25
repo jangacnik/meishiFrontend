@@ -87,7 +87,7 @@ async function submitCreate() {
   }
 }
 
-const registrationLink = computed(() => `${window.location.origin}/register?key=${encodeURIComponent(createdActivationKey.value ?? "")}`)
+const registrationLink = computed(() => `${window.location.origin}/register?key=${encodeURIComponent(createdActivationKey.value ?? '')}`)
 
 async function copyRegistrationLink() {
   try {

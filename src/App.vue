@@ -1,15 +1,18 @@
 <script setup lang="ts">
-import { ref, useTemplateRef } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, useTemplateRef, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import ConfirmDialog from 'primevue/confirmdialog'
 import Toast from 'primevue/toast'
 import BrandMark from './components/BrandMark.vue'
 import { useAuthStore } from './stores/auth'
 
 const router = useRouter()
+const route = useRoute()
 const auth = useAuthStore()
 const menuOpen = ref(false)
 const mainEl = useTemplateRef('main')
+
+watch(() => route.fullPath, () => (menuOpen.value = false))
 
 function logout() {
   auth.logout()
@@ -22,7 +25,7 @@ function logout() {
   <ConfirmDialog />
   <Toast />
   <a href="#main" class="skip-link" @click.prevent="mainEl?.focus()">Skip to content</a>
-  <header class="nav">
+  <header class="nav" @keydown.esc="menuOpen = false">
     <div class="nav-bar">
       <RouterLink to="/" class="brand" @click="menuOpen = false">
         <BrandMark />
@@ -31,8 +34,8 @@ function logout() {
 
       <nav class="links links-desktop" aria-label="Main">
         <template v-if="auth.isAuthenticated">
-          <RouterLink v-if="auth.isAdmin" to="/admin">Admin</RouterLink>
-          <span class="nickname">{{ auth.nickname }}</span>
+          <RouterLink to="/">Account ({{ auth.nickname }})</RouterLink>
+          <RouterLink v-if="auth.isAdmin" to="/admin">Users</RouterLink>
           <button type="button" class="ghost" @click="logout">Log out</button>
         </template>
         <template v-else>
@@ -57,8 +60,8 @@ function logout() {
 
     <nav v-if="menuOpen" class="links links-mobile" aria-label="Main">
       <template v-if="auth.isAuthenticated">
-        <RouterLink v-if="auth.isAdmin" to="/admin" @click="menuOpen = false">Admin</RouterLink>
-        <span class="nickname">{{ auth.nickname }}</span>
+        <RouterLink to="/" @click="menuOpen = false">Account ({{ auth.nickname }})</RouterLink>
+        <RouterLink v-if="auth.isAdmin" to="/admin" @click="menuOpen = false">Users</RouterLink>
         <button type="button" class="ghost" @click="logout">Log out</button>
       </template>
       <template v-else>
@@ -133,10 +136,6 @@ function logout() {
   background: rgba(232, 241, 242, 0.1);
 }
 
-.nickname {
-  color: var(--nav-muted);
-  font-size: 0.9rem;
-}
 .links-desktop {
   margin-left: auto;
 }
