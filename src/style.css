@@ -15,8 +15,8 @@
   --danger: #c92a2a;
   --frost: #2b6cb0;
 
-  --font-display: 'Shippori Mincho', serif;
-  --font-body: 'Noto Sans JP', system-ui, sans-serif;
+  --font-display: system-ui, 'Hiragino Sans', 'Yu Gothic', sans-serif;
+  --font-body: system-ui, 'Hiragino Sans', 'Yu Gothic', sans-serif;
 
   color-scheme: light;
 
