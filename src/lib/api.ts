@@ -53,6 +53,14 @@ export class ApiError extends Error {
   }
 }
 
+let onUnauthorized: (() => void) | null = null
+
+export function setUnauthorizedHandler(handler: () => void) {
+  onUnauthorized = handler
+}
+
+const SESSION_INDEPENDENT_PATHS = ['/auth/', '/users/me/password']
+
 async function request<T>(path: string, options: RequestInit = {}, token?: string): Promise<T> {
   const headers = new Headers(options.headers)
   headers.set('Content-Type', 'application/json')
@@ -65,6 +73,10 @@ async function request<T>(path: string, options: RequestInit = {}, token?: strin
   }
 
   const body = await response.json().catch(() => null)
+
+  if (response.status === 401 && token && !SESSION_INDEPENDENT_PATHS.some((p) => path.startsWith(p))) {
+    onUnauthorized?.()
+  }
 
   if (!response.ok) {
     throw new ApiError(body?.error ?? `request failed with status ${response.status}`, response.status)

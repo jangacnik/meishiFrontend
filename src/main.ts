@@ -7,6 +7,8 @@ import ToastService from 'primevue/toastservice'
 import './style.css'
 import App from './App.vue'
 import router from './router'
+import { setUnauthorizedHandler } from './lib/api'
+import { useAuthStore } from './stores/auth'
 
 const app = createApp(App)
 
@@ -18,5 +20,11 @@ app.use(router)
 app.use(PrimeVue, { theme: { preset: Aura, options: { darkModeSelector: false } } })
 app.use(ConfirmationService)
 app.use(ToastService)
+
+const auth = useAuthStore()
+setUnauthorizedHandler(() => {
+  auth.logout()
+  router.push({ name: 'login', query: { redirect: router.currentRoute.value.fullPath, expired: '1' } })
+})
 
 app.mount('#app')

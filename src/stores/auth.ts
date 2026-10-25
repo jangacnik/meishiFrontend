@@ -52,9 +52,13 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem(STORAGE_KEY)
   }
 
+  function logoutIfExpired() {
+    if (claims.value && isExpired(claims.value)) logout()
+  }
+
   function setNickname(newNickname: string) {
     if (claims.value) claims.value = { ...claims.value, nickname: newNickname }
   }
 
-  return { token, claims, isAuthenticated, isAdmin, nickname, login, register, logout, setNickname }
+  return { token, claims, isAuthenticated, isAdmin, nickname, login, register, logout, logoutIfExpired, setNickname }
 })

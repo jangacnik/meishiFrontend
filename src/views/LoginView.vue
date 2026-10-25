@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import InputText from 'primevue/inputtext'
 import Password from 'primevue/password'
 import Button from 'primevue/button'
@@ -9,6 +9,7 @@ import BrandMark from '../components/BrandMark.vue'
 import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
+const route = useRoute()
 const auth = useAuthStore()
 
 const nickname = ref('')
@@ -16,12 +17,19 @@ const password = ref('')
 const error = ref<string | null>(null)
 const loading = ref(false)
 
+const sessionExpired = route.query.expired === '1'
+
+function redirectTarget(): string {
+  const redirect = route.query.redirect
+  return typeof redirect === 'string' && redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '/'
+}
+
 async function submit() {
   error.value = null
   loading.value = true
   try {
     await auth.login(nickname.value, password.value)
-    router.push('/')
+    router.push(redirectTarget())
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'login failed'
   } finally {
@@ -47,6 +55,7 @@ async function submit() {
           <label for="password">Password</label>
           <Password id="password" v-model="password" :feedback="false" toggle-mask fluid />
         </div>
+        <Message v-if="sessionExpired && !error" severity="info">Session expired. Log in again.</Message>
         <Message v-if="error" severity="error">{{ error }}</Message>
         <Button type="submit" label="Log in" :loading="loading" fluid />
       </form>
