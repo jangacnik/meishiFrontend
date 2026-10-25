@@ -164,6 +164,8 @@ function logout() {
   border: none;
   color: var(--ice);
   padding: 0.4rem;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
   border-radius: 0.5rem;
   cursor: pointer;
   transition: background-color 0.15s ease;
@@ -186,10 +188,15 @@ function logout() {
 .bar-bottom.open {
   transform: translateY(-5px) rotate(-45deg);
 }
+.links-mobile a {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
 .links-mobile {
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.85rem;
+  gap: 0.25rem;
   padding: 0.25rem 1.25rem 1.1rem;
   border-top: 1px solid rgba(232, 241, 242, 0.15);
   margin-top: 0.25rem;

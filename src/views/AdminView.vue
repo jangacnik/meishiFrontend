@@ -15,6 +15,7 @@ import * as api from '../lib/api'
 import type { AdminProfileUpdate, Role, UserSummary } from '../lib/api'
 import { errorMessage } from '../lib/messages'
 import AppIcon from '../components/AppIcon.vue'
+import UserActions from '../components/UserActions.vue'
 import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
@@ -22,6 +23,7 @@ const confirm = useConfirm()
 const toast = useToast()
 const users = ref<UserSummary[]>([])
 const error = ref<string | null>(null)
+const loading = ref(false)
 const busyUserId = ref<string | null>(null)
 
 const roleOptions: Role[] = ['USER', 'ADMIN']
@@ -57,10 +59,13 @@ const newPassword = ref('')
 async function refresh() {
   if (!auth.token) return
   error.value = null
+  loading.value = true
   try {
     users.value = await api.listUsers(auth.token)
   } catch (e) {
     error.value = errorMessage(e, 'Could not load users.')
+  } finally {
+    loading.value = false
   }
 }
 
@@ -176,6 +181,14 @@ function rowClass(data: UserSummary) {
   return data.status === 'FROZEN' ? 'row-frozen' : ''
 }
 
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString()
+}
+
+function requestRemove(user: UserSummary) {
+  return user.deletionRequestedAt ? confirmRemoveRequested(user) : confirmRemove(user)
+}
+
 function openCreateDialog() {
   createRole.value = 'USER'
   createdActivationKey.value = null
@@ -257,7 +270,8 @@ onMounted(refresh)
     </Button>
 
     <div class="table-scroll">
-      <DataTable :value="users" data-key="id" class="users-table" :row-class="rowClass">
+      <DataTable :value="users" data-key="id" class="users-table" :row-class="rowClass" :loading="loading">
+        <template #empty>No users</template>
         <Column field="nickname" header="Nickname">
           <template #body="{ data }">{{ data.nickname ?? '(pending activation)' }}</template>
         </Column>
@@ -293,82 +307,59 @@ onMounted(refresh)
             <span v-else class="muted">—</span>
           </template>
         </Column>
-        <Column field="createdAt" header="Created" />
+        <Column field="createdAt" header="Created">
+          <template #body="{ data }: { data: UserSummary }">{{ formatDate(data.createdAt) }}</template>
+        </Column>
         <Column header="">
           <template #body="{ data }: { data: UserSummary }">
-            <div class="row">
-              <Button
-                class="icon-btn"
-                severity="secondary"
-                size="small"
-                outlined
-                :disabled="busyUserId === data.id"
-                @click="openEditDialog(data)"
-              >
-                <AppIcon name="pencil" :size="13" />
-                Edit
-              </Button>
-              <Button
-                class="icon-btn"
-                severity="secondary"
-                size="small"
-                outlined
-                :disabled="busyUserId === data.id"
-                @click="openPasswordDialog(data)"
-              >
-                <AppIcon name="key" :size="13" />
-                Set password
-              </Button>
-              <Button
-                v-if="data.status === 'FROZEN'"
-                class="icon-btn"
-                severity="info"
-                size="small"
-                outlined
-                :disabled="busyUserId === data.id"
-                @click="unfreeze(data)"
-              >
-                <AppIcon name="sun" :size="13" />
-                Unfreeze
-              </Button>
-              <Button
-                v-else
-                class="icon-btn"
-                severity="info"
-                size="small"
-                :disabled="busyUserId === data.id"
-                @click="confirmFreeze(data)"
-              >
-                <AppIcon name="snowflake" :size="13" />
-                Freeze
-              </Button>
-              <Button
-                v-if="data.deletionRequestedAt"
-                class="icon-btn"
-                severity="danger"
-                size="small"
-                :disabled="busyUserId === data.id"
-                @click="confirmRemoveRequested(data)"
-              >
-                <AppIcon name="trash" :size="13" />
-                Confirm &amp; delete
-              </Button>
-              <Button
-                v-else
-                class="icon-btn"
-                severity="danger"
-                size="small"
-                :disabled="busyUserId === data.id"
-                @click="confirmRemove(data)"
-              >
-                <AppIcon name="trash" :size="13" />
-                Delete
-              </Button>
-            </div>
+            <UserActions
+              :user="data"
+              :busy="busyUserId === data.id"
+              @edit="openEditDialog(data)"
+              @set-password="openPasswordDialog(data)"
+              @freeze="confirmFreeze(data)"
+              @unfreeze="unfreeze(data)"
+              @remove="requestRemove(data)"
+            />
           </template>
         </Column>
       </DataTable>
     </div>
+
+    <p v-if="loading" class="muted users-cards">Loading users...</p>
+    <p v-else-if="users.length === 0" class="muted users-cards">No users</p>
+    <ul v-else class="users-cards stack">
+      <li v-for="user in users" :key="user.id" :class="['card', 'stack', rowClass(user)]">
+        <div class="row">
+          <strong>{{ user.nickname ?? '(pending activation)' }}</strong>
+          <Tag :severity="user.status === 'FROZEN' ? 'info' : 'success'">
+            <AppIcon v-if="user.status === 'FROZEN'" name="snowflake" :size="12" />
+            {{ user.status }}
+          </Tag>
+          <Tag v-if="!user.activated" severity="warn" value="not activated" />
+          <Tag v-if="user.deletionRequestedAt" severity="danger">
+            <AppIcon name="trash" :size="12" />
+            deletion requested
+          </Tag>
+        </div>
+        <p class="muted">Created {{ formatDate(user.createdAt) }}</p>
+        <Select
+          :model-value="user.role"
+          :options="roleOptions"
+          :disabled="busyUserId === user.id"
+          @update:model-value="(role: Role) => changeRole(user, role)"
+        />
+        <UserActions
+          :user="user"
+          :busy="busyUserId === user.id"
+          @edit="openEditDialog(user)"
+          @set-password="openPasswordDialog(user)"
+          @freeze="confirmFreeze(user)"
+          @unfreeze="unfreeze(user)"
+          @remove="requestRemove(user)"
+        />
+      </li>
+    </ul>
 
     <Dialog v-model:visible="createDialogOpen" header="Create user" modal>
       <div v-if="!createdActivationKey">
@@ -486,6 +477,23 @@ onMounted(refresh)
 }
 .users-table :deep(.row-frozen) > td {
   background: #f4f8fc;
+}
+.users-cards {
+  display: none;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.users-cards .row-frozen {
+  border-left: 3px solid var(--frost);
+}
+@media (max-width: 640px) {
+  .table-scroll {
+    display: none;
+  }
+  .users-cards {
+    display: flex;
+  }
 }
 .users-table :deep(.row-frozen) > td:first-child {
   box-shadow: inset 3px 0 0 0 var(--frost);

@@ -333,3 +333,13 @@ code {
     transition-duration: 0.01ms !important;
   }
 }
+
+@media (max-width: 640px) {
+  .p-button,
+  .p-select {
+    min-height: 2.75rem;
+  }
+  .p-button {
+    min-width: 2.75rem;
+  }
+}
