@@ -18,6 +18,7 @@ const toast = useToast()
 const me = ref<MeUser | null>(null)
 const error = ref<string | null>(null)
 const saving = ref(false)
+const deletionPending = ref(false)
 
 const email = ref('')
 const addressLine1 = ref('')
@@ -135,6 +136,24 @@ async function changePassword() {
   }
 }
 
+async function runDeletionAction(action: (token: string) => Promise<MeUser>, successSummary: string, failureSummary: string) {
+  if (!auth.token || deletionPending.value) return
+  deletionPending.value = true
+  try {
+    me.value = await action(auth.token)
+    toast.add({ severity: 'info', summary: successSummary, life: 3000 })
+  } catch (e) {
+    toast.add({
+      severity: 'error',
+      summary: failureSummary,
+      detail: e instanceof Error ? e.message : undefined,
+      life: 5000,
+    })
+  } finally {
+    deletionPending.value = false
+  }
+}
+
 function confirmRequestDeletion() {
   confirm.require({
     header: 'Request account deletion',
@@ -142,18 +161,12 @@ function confirmRequestDeletion() {
     acceptLabel: 'Request deletion',
     acceptProps: { severity: 'danger' },
     rejectLabel: 'Cancel',
-    accept: async () => {
-      if (!auth.token) return
-      me.value = await api.requestDeletion(auth.token)
-      toast.add({ severity: 'info', summary: 'Deletion requested', life: 3000 })
-    },
+    accept: () => runDeletionAction(api.requestDeletion, 'Deletion requested', 'Could not request deletion'),
   })
 }
 
-async function cancelRequest() {
-  if (!auth.token) return
-  me.value = await api.cancelDeletionRequest(auth.token)
-  toast.add({ severity: 'info', summary: 'Deletion request cancelled', life: 3000 })
+function cancelRequest() {
+  return runDeletionAction(api.cancelDeletionRequest, 'Deletion request cancelled', 'Could not cancel request')
 }
 
 onMounted(load)
@@ -257,14 +270,14 @@ onMounted(load)
           You requested deletion on {{ new Date(me.deletionRequestedAt).toLocaleDateString() }}. An admin will review
           it.
         </p>
-        <Button class="icon-btn" severity="secondary" @click="cancelRequest">
+        <Button class="icon-btn" severity="secondary" :loading="deletionPending" @click="cancelRequest">
           <AppIcon name="undo" :size="15" />
           Cancel request
         </Button>
       </template>
       <template v-else>
         <p class="field-hint">This flags your account for an admin to review and delete — it isn't instant.</p>
-        <Button class="icon-btn" severity="danger" outlined @click="confirmRequestDeletion">
+        <Button class="icon-btn" severity="danger" outlined :disabled="deletionPending" @click="confirmRequestDeletion">
           <AppIcon name="trash" :size="15" />
           Request account deletion
         </Button>

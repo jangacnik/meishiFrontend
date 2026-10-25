@@ -20,6 +20,7 @@ const confirm = useConfirm()
 const toast = useToast()
 const users = ref<UserSummary[]>([])
 const error = ref<string | null>(null)
+const busyUserId = ref<string | null>(null)
 
 const roleOptions: Role[] = ['USER', 'ADMIN']
 
@@ -84,36 +85,43 @@ async function copyActivationKey() {
   }
 }
 
-async function changeRole(user: UserSummary, role: Role) {
-  if (!auth.token) return
+async function runRowAction(user: UserSummary, failureSummary: string, action: () => Promise<void>) {
+  busyUserId.value = user.id
   try {
-    await api.updateUserRole(auth.token, user.id, role)
+    await action()
     await refresh()
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'failed to update role'
+    toast.add({
+      severity: 'error',
+      summary: failureSummary,
+      detail: e instanceof Error ? e.message : undefined,
+      life: 5000,
+    })
+  } finally {
+    busyUserId.value = null
   }
 }
 
-async function freeze(user: UserSummary) {
-  if (!auth.token) return
-  try {
+function changeRole(user: UserSummary, role: Role) {
+  return runRowAction(user, 'Failed to update role', async () => {
+    if (auth.token) await api.updateUserRole(auth.token, user.id, role)
+  })
+}
+
+function freeze(user: UserSummary) {
+  return runRowAction(user, 'Failed to freeze account', async () => {
+    if (!auth.token) return
     await api.updateUserStatus(auth.token, user.id, 'FROZEN')
     toast.add({ severity: 'success', summary: 'Account frozen', life: 2500 })
-    await refresh()
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : 'failed to freeze account'
-  }
+  })
 }
 
-async function unfreeze(user: UserSummary) {
-  if (!auth.token) return
-  try {
+function unfreeze(user: UserSummary) {
+  return runRowAction(user, 'Failed to unfreeze account', async () => {
+    if (!auth.token) return
     await api.updateUserStatus(auth.token, user.id, 'ACTIVE')
     toast.add({ severity: 'success', summary: 'Account unfrozen', life: 2500 })
-    await refresh()
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : 'failed to unfreeze account'
-  }
+  })
 }
 
 function confirmFreeze(user: UserSummary) {
@@ -128,15 +136,12 @@ function confirmFreeze(user: UserSummary) {
   })
 }
 
-async function remove(user: UserSummary) {
-  if (!auth.token) return
-  try {
+function remove(user: UserSummary) {
+  return runRowAction(user, 'Failed to delete user', async () => {
+    if (!auth.token) return
     await api.deleteUser(auth.token, user.id)
     toast.add({ severity: 'success', summary: 'User deleted', life: 2500 })
-    await refresh()
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : 'failed to delete user'
-  }
+  })
 }
 
 function confirmRemove(user: UserSummary) {
@@ -264,6 +269,7 @@ onMounted(refresh)
             <Select
               :model-value="data.role"
               :options="roleOptions"
+              :disabled="busyUserId === data.id"
               @update:model-value="(role: Role) => changeRole(data, role)"
             />
           </template>
@@ -294,11 +300,25 @@ onMounted(refresh)
         <Column header="">
           <template #body="{ data }: { data: UserSummary }">
             <div class="row">
-              <Button class="icon-btn" severity="secondary" size="small" outlined @click="openEditDialog(data)">
+              <Button
+                class="icon-btn"
+                severity="secondary"
+                size="small"
+                outlined
+                :disabled="busyUserId === data.id"
+                @click="openEditDialog(data)"
+              >
                 <AppIcon name="pencil" :size="13" />
                 Edit
               </Button>
-              <Button class="icon-btn" severity="secondary" size="small" outlined @click="openPasswordDialog(data)">
+              <Button
+                class="icon-btn"
+                severity="secondary"
+                size="small"
+                outlined
+                :disabled="busyUserId === data.id"
+                @click="openPasswordDialog(data)"
+              >
                 <AppIcon name="key" :size="13" />
                 Set password
               </Button>
@@ -308,12 +328,20 @@ onMounted(refresh)
                 severity="info"
                 size="small"
                 outlined
+                :disabled="busyUserId === data.id"
                 @click="unfreeze(data)"
               >
                 <AppIcon name="sun" :size="13" />
                 Unfreeze
               </Button>
-              <Button v-else class="icon-btn" severity="info" size="small" @click="confirmFreeze(data)">
+              <Button
+                v-else
+                class="icon-btn"
+                severity="info"
+                size="small"
+                :disabled="busyUserId === data.id"
+                @click="confirmFreeze(data)"
+              >
                 <AppIcon name="snowflake" :size="13" />
                 Freeze
               </Button>
@@ -322,12 +350,20 @@ onMounted(refresh)
                 class="icon-btn"
                 severity="danger"
                 size="small"
+                :disabled="busyUserId === data.id"
                 @click="confirmRemoveRequested(data)"
               >
                 <AppIcon name="trash" :size="13" />
                 Confirm &amp; delete
               </Button>
-              <Button v-else class="icon-btn" severity="danger" size="small" @click="confirmRemove(data)">
+              <Button
+                v-else
+                class="icon-btn"
+                severity="danger"
+                size="small"
+                :disabled="busyUserId === data.id"
+                @click="confirmRemove(data)"
+              >
                 <AppIcon name="trash" :size="13" />
                 Delete
               </Button>
