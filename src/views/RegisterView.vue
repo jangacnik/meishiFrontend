@@ -14,6 +14,8 @@ const route = useRoute()
 const auth = useAuthStore()
 
 const activationKey = ref(typeof route.query.key === 'string' ? route.query.key : '')
+if (route.query.key !== undefined) router.replace({ name: 'register' })
+
 const nickname = ref('')
 const password = ref('')
 const confirmPassword = ref('')
