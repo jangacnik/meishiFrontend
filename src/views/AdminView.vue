@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
@@ -87,14 +87,15 @@ async function submitCreate() {
   }
 }
 
-async function copyActivationKey() {
-  if (!createdActivationKey.value) return
+const registrationLink = computed(() => `${window.location.origin}/register?key=${encodeURIComponent(createdActivationKey.value ?? "")}`)
+
+async function copyRegistrationLink() {
   try {
-    await navigator.clipboard.writeText(createdActivationKey.value)
+    await navigator.clipboard.writeText(registrationLink.value)
     copied.value = true
     toast.add({ severity: 'success', summary: 'Copied to clipboard', life: 2000 })
   } catch {
-    toast.add({ severity: 'error', summary: 'Could not copy', detail: 'Select and copy the key manually.', life: 5000 })
+    toast.add({ severity: 'error', summary: 'Could not copy', detail: 'Select and copy the link manually.', life: 5000 })
   }
 }
 
@@ -121,6 +122,20 @@ function changeRole(user: UserSummary, role: Role) {
   })
 }
 
+function isSelf(user: UserSummary) {
+  return user.id === auth.claims?.sub
+}
+
+function confirmRoleChange(user: UserSummary, role: Role) {
+  confirm.require({
+    header: 'Change role',
+    message: `Change ${user.nickname ?? '(pending activation)'} to ${role}?`,
+    acceptLabel: 'Change role',
+    rejectLabel: 'Cancel',
+    accept: () => changeRole(user, role),
+  })
+}
+
 function freeze(user: UserSummary) {
   return runRowAction(user, 'Failed to freeze account', async () => {
     if (!auth.token) return
@@ -140,7 +155,7 @@ function unfreeze(user: UserSummary) {
 function confirmFreeze(user: UserSummary) {
   const label = user.nickname ?? '(pending activation)'
   confirm.require({
-    header: 'Freeze account',
+    header: 'Freeze user',
     message: `Freeze ${label}? They won't be able to log in to Meishi or Omiyage until unfrozen.`,
     acceptLabel: 'Freeze',
     acceptProps: { severity: 'info' },
@@ -172,9 +187,9 @@ function confirmRemove(user: UserSummary) {
 function confirmRemoveRequested(user: UserSummary) {
   const label = user.nickname ?? '(pending activation)'
   confirm.require({
-    header: 'Confirm account deletion',
+    header: 'Delete user',
     message: `${label} requested account deletion. Delete their account now?`,
-    acceptLabel: 'Delete account',
+    acceptLabel: 'Delete user',
     acceptProps: { severity: 'danger' },
     rejectLabel: 'Not yet',
     accept: () => remove(user),
@@ -185,6 +200,10 @@ function confirmRemoveRequested(user: UserSummary) {
 // just in the Status column.
 function rowClass(data: UserSummary) {
   return data.status === 'FROZEN' ? 'row-frozen' : ''
+}
+
+function statusLabel(status: UserSummary['status']) {
+  return status === 'FROZEN' ? 'Frozen' : 'Active'
 }
 
 function formatDate(iso: string) {
@@ -290,8 +309,8 @@ onMounted(refresh)
             <Select
               :model-value="data.role"
               :options="roleOptions"
-              :disabled="busyUserId === data.id"
-              @update:model-value="(role: Role) => changeRole(data, role)"
+              :disabled="busyUserId === data.id || isSelf(data)"
+              @update:model-value="(role: Role) => confirmRoleChange(data, role)"
             />
           </template>
         </Column>
@@ -299,7 +318,7 @@ onMounted(refresh)
           <template #body="{ data }: { data: UserSummary }">
             <Tag :severity="data.status === 'FROZEN' ? 'info' : 'success'">
               <AppIcon v-if="data.status === 'FROZEN'" name="snowflake" :size="12" />
-              {{ data.status }}
+              {{ statusLabel(data.status) }}
             </Tag>
           </template>
         </Column>
@@ -325,6 +344,7 @@ onMounted(refresh)
             <UserActions
               :user="data"
               :busy="busyUserId === data.id"
+              :is-self="isSelf(data)"
               @edit="openEditDialog(data)"
               @set-password="openPasswordDialog(data)"
               @freeze="confirmFreeze(data)"
@@ -344,7 +364,7 @@ onMounted(refresh)
           <strong>{{ user.nickname ?? '(pending activation)' }}</strong>
           <Tag :severity="user.status === 'FROZEN' ? 'info' : 'success'">
             <AppIcon v-if="user.status === 'FROZEN'" name="snowflake" :size="12" />
-            {{ user.status }}
+            {{ statusLabel(user.status) }}
           </Tag>
           <Tag v-if="!user.activated" severity="warn" value="not activated" />
           <Tag v-if="user.deletionRequestedAt" severity="danger">
@@ -356,12 +376,13 @@ onMounted(refresh)
         <Select
           :model-value="user.role"
           :options="roleOptions"
-          :disabled="busyUserId === user.id"
-          @update:model-value="(role: Role) => changeRole(user, role)"
+          :disabled="busyUserId === user.id || isSelf(user)"
+          @update:model-value="(role: Role) => confirmRoleChange(user, role)"
         />
         <UserActions
           :user="user"
           :busy="busyUserId === user.id"
+          :is-self="isSelf(user)"
           @edit="openEditDialog(user)"
           @set-password="openPasswordDialog(user)"
           @freeze="confirmFreeze(user)"
@@ -371,37 +392,41 @@ onMounted(refresh)
       </li>
     </ul>
 
-    <Dialog v-model:visible="createDialogOpen" header="Create user" modal>
-      <div v-if="!createdActivationKey">
+    <Dialog v-model:visible="createDialogOpen" header="Create user" modal :style="{ width: 'min(28rem, 92vw)' }">
+      <form v-if="!createdActivationKey" class="stack" @submit.prevent="submitCreate">
         <Message v-if="createError" severity="error">{{ createError }}</Message>
         <div class="field">
           <label for="role">Role</label>
           <Select id="role" v-model="createRole" :options="roleOptions" />
         </div>
-        <Button class="icon-btn" :loading="creating" @click="submitCreate">
-          <AppIcon name="user-plus" :size="15" />
-          Create
-        </Button>
-      </div>
-      <div v-else class="stack">
-        <p>User created. Share this activation key so they can register:</p>
         <div class="row">
-          <code>{{ createdActivationKey }}</code>
-          <Button class="icon-btn" size="small" severity="secondary" @click="copyActivationKey">
-            <AppIcon :name="copied ? 'check' : 'copy'" />
-            {{ copied ? 'Copied' : 'Copy' }}
+          <Button type="submit" class="icon-btn" :loading="creating">
+            <AppIcon name="user-plus" :size="15" />
+            Create
           </Button>
+          <Button type="button" severity="secondary" outlined label="Cancel" @click="createDialogOpen = false" />
+        </div>
+      </form>
+      <div v-else class="stack">
+        <p>User created. Share this registration link. It is shown only once.</p>
+        <code>{{ registrationLink }}</code>
+        <div class="row">
+          <Button class="icon-btn" severity="secondary" @click="copyRegistrationLink">
+            <AppIcon :name="copied ? 'check' : 'copy'" />
+            {{ copied ? 'Copied' : 'Copy link' }}
+          </Button>
+          <Button type="button" severity="secondary" outlined label="Close" @click="createDialogOpen = false" />
         </div>
       </div>
     </Dialog>
 
-    <Dialog v-model:visible="editDialogOpen" header="Edit user" modal>
-      <div class="stack">
+    <Dialog v-model:visible="editDialogOpen" header="Edit user" modal :style="{ width: 'min(28rem, 92vw)' }">
+      <form class="stack" @submit.prevent="submitEdit">
         <Message v-if="editError" severity="error">{{ editError }}</Message>
         <p class="field-hint">Current values are not shown. Empty fields are left unchanged.</p>
         <div class="field">
           <label for="editNickname">Nickname</label>
-          <InputText id="editNickname" v-model="editFields.nickname" autocapitalize="off" spellcheck="false" />
+          <InputText id="editNickname" v-model="editFields.nickname" autofocus autocapitalize="off" spellcheck="false" />
         </div>
         <div class="field">
           <label for="editEmail">Email</label>
@@ -443,15 +468,18 @@ onMounted(refresh)
           <label for="editCountry">Country</label>
           <InputText id="editCountry" v-model="editFields.country" />
         </div>
-        <Button class="icon-btn" :loading="editSaving" @click="submitEdit">
-          <AppIcon name="check" :size="15" />
-          Save
-        </Button>
-      </div>
+        <div class="row">
+          <Button type="submit" class="icon-btn" :loading="editSaving">
+            <AppIcon name="check" :size="15" />
+            Save
+          </Button>
+          <Button type="button" severity="secondary" outlined label="Cancel" @click="editDialogOpen = false" />
+        </div>
+      </form>
     </Dialog>
 
-    <Dialog v-model:visible="passwordDialogOpen" header="Set password" modal>
-      <div class="stack">
+    <Dialog v-model:visible="passwordDialogOpen" header="Set password" modal :style="{ width: 'min(28rem, 92vw)' }">
+      <form class="stack" @submit.prevent="submitPassword">
         <Message v-if="passwordError" severity="error">{{ passwordError }}</Message>
         <div class="field">
           <label for="newUserPassword">New password</label>
@@ -461,14 +489,17 @@ onMounted(refresh)
             :feedback="false"
             toggle-mask
             fluid
-            :input-props="{ autocomplete: 'new-password' }"
+            :input-props="{ autocomplete: 'new-password', autofocus: true }"
           />
         </div>
-        <Button class="icon-btn" :loading="passwordSaving" @click="submitPassword">
-          <AppIcon name="key" :size="15" />
-          Set password
-        </Button>
-      </div>
+        <div class="row">
+          <Button type="submit" class="icon-btn" :loading="passwordSaving">
+            <AppIcon name="key" :size="15" />
+            Set password
+          </Button>
+          <Button type="button" severity="secondary" outlined label="Cancel" @click="passwordDialogOpen = false" />
+        </div>
+      </form>
     </Dialog>
   </div>
 </template>

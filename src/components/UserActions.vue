@@ -3,7 +3,7 @@ import Button from 'primevue/button'
 import type { UserSummary } from '../lib/api'
 import AppIcon from './AppIcon.vue'
 
-defineProps<{ user: UserSummary; busy: boolean }>()
+defineProps<{ user: UserSummary; busy: boolean; isSelf: boolean }>()
 defineEmits<{
   edit: []
   setPassword: []
@@ -30,21 +30,21 @@ defineEmits<{
         severity="info"
         size="small"
         outlined
-        :disabled="busy"
+        :disabled="busy || isSelf"
         @click="$emit('unfreeze')"
       >
         <AppIcon name="sun" :size="13" />
         Unfreeze
       </Button>
-      <Button v-else class="icon-btn" severity="info" size="small" :disabled="busy" @click="$emit('freeze')">
+      <Button v-else class="icon-btn" severity="info" size="small" :disabled="busy || isSelf" @click="$emit('freeze')">
         <AppIcon name="snowflake" :size="13" />
         Freeze
       </Button>
     </div>
     <div class="row delete-row">
-      <Button class="icon-btn" severity="danger" size="small" :disabled="busy" @click="$emit('remove')">
+      <Button class="icon-btn" severity="danger" size="small" :disabled="busy || isSelf" @click="$emit('remove')">
         <AppIcon name="trash" :size="13" />
-        {{ user.deletionRequestedAt ? 'Confirm & delete' : 'Delete' }}
+        {{ user.deletionRequestedAt ? 'Confirm & delete user' : 'Delete user' }}
       </Button>
     </div>
   </div>
