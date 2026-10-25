@@ -19,6 +19,8 @@ const toast = useToast()
 
 const me = ref<MeUser | null>(null)
 const error = ref<string | null>(null)
+const loading = ref(true)
+const loadError = ref<string | null>(null)
 const saving = ref(false)
 const deletionPending = ref(false)
 
@@ -64,11 +66,15 @@ function applyToForm(user: MeUser) {
 
 async function load() {
   if (!auth.token) return
+  loading.value = true
+  loadError.value = null
   try {
     me.value = await api.getMe(auth.token)
     applyToForm(me.value)
   } catch (e) {
-    error.value = errorMessage(e, 'Could not load your profile.')
+    loadError.value = errorMessage(e, 'Could not load your profile.')
+  } finally {
+    loading.value = false
   }
 }
 
@@ -233,6 +239,12 @@ onMounted(load)
       </Button>
     </div>
 
+    <p v-if="loading" class="muted">Loading profile...</p>
+    <Message v-else-if="loadError" severity="error">
+      {{ loadError }}
+      <Button label="Retry" size="small" severity="secondary" @click="load" />
+    </Message>
+    <template v-else>
     <Message v-if="error" severity="error">{{ error }}</Message>
 
     <form class="card" novalidate @submit.prevent="save">
@@ -371,6 +383,7 @@ onMounted(load)
         </Button>
       </template>
     </div>
+    </template>
   </div>
 </template>
 

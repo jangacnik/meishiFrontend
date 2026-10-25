@@ -24,6 +24,8 @@ const toast = useToast()
 const users = ref<UserSummary[]>([])
 const error = ref<string | null>(null)
 const loading = ref(false)
+const creating = ref(false)
+const createError = ref<string | null>(null)
 const busyUserId = ref<string | null>(null)
 
 const roleOptions: Role[] = ['USER', 'ADMIN']
@@ -70,14 +72,18 @@ async function refresh() {
 }
 
 async function submitCreate() {
-  if (!auth.token) return
+  if (!auth.token || creating.value) return
+  creating.value = true
+  createError.value = null
   try {
     const created = await api.createUser(auth.token, createRole.value)
     createdActivationKey.value = created.activationKey
     copied.value = false
     await refresh()
   } catch (e) {
-    error.value = errorMessage(e, 'Could not create the user.')
+    createError.value = errorMessage(e, 'Could not create the user.')
+  } finally {
+    creating.value = false
   }
 }
 
@@ -88,7 +94,7 @@ async function copyActivationKey() {
     copied.value = true
     toast.add({ severity: 'success', summary: 'Copied to clipboard', life: 2000 })
   } catch {
-    error.value = 'could not copy — select and copy manually'
+    toast.add({ severity: 'error', summary: 'Could not copy', detail: 'Select and copy the key manually.', life: 5000 })
   }
 }
 
@@ -192,6 +198,7 @@ function requestRemove(user: UserSummary) {
 function openCreateDialog() {
   createRole.value = 'USER'
   createdActivationKey.value = null
+  createError.value = null
   copied.value = false
   createDialogOpen.value = true
 }
@@ -262,7 +269,10 @@ onMounted(refresh)
 <template>
   <div class="page-wide stack">
     <h1>Users</h1>
-    <Message v-if="error" severity="error">{{ error }}</Message>
+    <Message v-if="error" severity="error">
+      {{ error }}
+      <Button label="Retry" size="small" severity="secondary" :loading="loading" @click="refresh" />
+    </Message>
 
     <Button class="icon-btn create-user-btn" @click="openCreateDialog">
       <AppIcon name="user-plus" :size="15" />
@@ -363,11 +373,12 @@ onMounted(refresh)
 
     <Dialog v-model:visible="createDialogOpen" header="Create user" modal>
       <div v-if="!createdActivationKey">
+        <Message v-if="createError" severity="error">{{ createError }}</Message>
         <div class="field">
           <label for="role">Role</label>
           <Select id="role" v-model="createRole" :options="roleOptions" />
         </div>
-        <Button class="icon-btn" @click="submitCreate">
+        <Button class="icon-btn" :loading="creating" @click="submitCreate">
           <AppIcon name="user-plus" :size="15" />
           Create
         </Button>
