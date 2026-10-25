@@ -476,7 +476,7 @@ onMounted(refresh)
   align-self: flex-start;
 }
 .users-table :deep(.row-frozen) > td {
-  background: #f4f8fc;
+  background: #e4eefa;
 }
 .users-cards {
   display: none;

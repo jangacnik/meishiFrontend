@@ -105,7 +105,7 @@ function logout() {
 }
 .links a {
   text-decoration: none;
-  color: rgba(232, 241, 242, 0.65);
+  color: var(--nav-muted);
   font-weight: 500;
   padding: 0.2rem 0;
 }
@@ -119,7 +119,7 @@ function logout() {
 /* Log out is an action, not a destination — no underline, a quiet outline instead. */
 .links .ghost {
   background: none;
-  color: rgba(232, 241, 242, 0.65);
+  color: var(--nav-muted);
   font: inherit;
   font-weight: 500;
   cursor: pointer;
@@ -134,7 +134,7 @@ function logout() {
 }
 
 .nickname {
-  color: rgba(232, 241, 242, 0.6);
+  color: var(--nav-muted);
   font-size: 0.9rem;
 }
 .links-desktop {
