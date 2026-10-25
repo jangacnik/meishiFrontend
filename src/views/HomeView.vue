@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
+import Password from 'primevue/password'
 import Message from 'primevue/message'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import * as api from '../lib/api'
 import { ApiError } from '../lib/api'
 import type { MeUser } from '../lib/api'
+import { errorMessage } from '../lib/messages'
 import AppIcon from '../components/AppIcon.vue'
 import { useAuthStore } from '../stores/auth'
 
@@ -26,6 +28,7 @@ const addressLine2 = ref('')
 const postalCode = ref('')
 const city = ref('')
 const country = ref('')
+const emailError = ref<string | null>(null)
 
 const editingNickname = ref(false)
 const nicknameInput = ref('')
@@ -36,7 +39,19 @@ const currentPassword = ref('')
 const newPassword = ref('')
 const confirmPassword = ref('')
 const passwordError = ref<string | null>(null)
+const passwordSubmitted = ref(false)
+const confirmPasswordError = computed(() =>
+  (passwordSubmitted.value || confirmPassword.value) && newPassword.value !== confirmPassword.value
+    ? 'Passwords do not match.'
+    : null,
+)
+const currentPasswordError = ref<string | null>(null)
+const newPasswordError = ref<string | null>(null)
 const changingPassword = ref(false)
+
+watch(email, () => (emailError.value = null))
+watch(currentPassword, () => (currentPasswordError.value = null))
+watch(newPassword, () => (newPasswordError.value = null))
 
 function applyToForm(user: MeUser) {
   email.value = user.email ?? ''
@@ -53,14 +68,16 @@ async function load() {
     me.value = await api.getMe(auth.token)
     applyToForm(me.value)
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'failed to load profile'
+    error.value = errorMessage(e, 'Could not load your profile.')
   }
 }
 
 async function save() {
   if (!auth.token) return
-  saving.value = true
   error.value = null
+  emailError.value = email.value && !/^\S+@\S+\.\S+$/.test(email.value) ? 'Enter a valid email address.' : null
+  if (emailError.value) return
+  saving.value = true
   try {
     me.value = await api.updateMe(auth.token, {
       email: email.value,
@@ -72,7 +89,7 @@ async function save() {
     })
     toast.add({ severity: 'success', summary: 'Profile saved', life: 3000 })
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'failed to save profile'
+    error.value = errorMessage(e, 'Could not save your profile.')
   } finally {
     saving.value = false
   }
@@ -91,20 +108,19 @@ function cancelEditNickname() {
 
 async function saveNickname() {
   if (!auth.token) return
-  savingNickname.value = true
   nicknameError.value = null
+  if (!nicknameInput.value.trim()) {
+    nicknameError.value = 'Choose a nickname.'
+    return
+  }
+  savingNickname.value = true
   try {
     await api.updateMyNickname(auth.token, nicknameInput.value)
     auth.setNickname(nicknameInput.value)
     editingNickname.value = false
     toast.add({ severity: 'success', summary: 'Nickname updated', life: 3000 })
   } catch (e) {
-    nicknameError.value =
-      e instanceof ApiError && e.status === 409
-        ? 'that nickname is already taken'
-        : e instanceof Error
-          ? e.message
-          : 'failed to update nickname'
+    nicknameError.value = errorMessage(e, 'Could not update your nickname.')
   } finally {
     savingNickname.value = false
   }
@@ -113,24 +129,23 @@ async function saveNickname() {
 async function changePassword() {
   if (!auth.token) return
   passwordError.value = null
-  if (newPassword.value !== confirmPassword.value) {
-    passwordError.value = 'new passwords do not match'
-    return
-  }
+  passwordSubmitted.value = true
+  currentPasswordError.value = currentPassword.value ? null : 'Enter your current password.'
+  newPasswordError.value = newPassword.value ? null : 'Choose a new password.'
+  if (currentPasswordError.value || newPasswordError.value || confirmPasswordError.value) return
   changingPassword.value = true
   try {
     await api.changeMyPassword(auth.token, currentPassword.value, newPassword.value)
     currentPassword.value = ''
     newPassword.value = ''
     confirmPassword.value = ''
+    passwordSubmitted.value = false
     toast.add({ severity: 'success', summary: 'Password changed', life: 3000 })
   } catch (e) {
     passwordError.value =
       e instanceof ApiError && e.status === 401
-        ? 'current password is incorrect'
-        : e instanceof Error
-          ? e.message
-          : 'failed to change password'
+        ? 'Current password is incorrect.'
+        : errorMessage(e, 'Could not change your password.')
   } finally {
     changingPassword.value = false
   }
@@ -146,7 +161,7 @@ async function runDeletionAction(action: (token: string) => Promise<MeUser>, suc
     toast.add({
       severity: 'error',
       summary: failureSummary,
-      detail: e instanceof Error ? e.message : undefined,
+      detail: errorMessage(e, failureSummary),
       life: 5000,
     })
   } finally {
@@ -176,7 +191,18 @@ onMounted(load)
   <div class="page stack">
     <header class="page-head">
       <template v-if="editingNickname">
-        <InputText v-model="nicknameInput" placeholder="Nickname" @keyup.enter="saveNickname" />
+        <InputText
+          v-model="nicknameInput"
+          placeholder="Nickname"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
+          :invalid="!!nicknameError"
+          :aria-invalid="!!nicknameError"
+          :aria-describedby="nicknameError ? 'nickname-error' : undefined"
+          @keyup.enter="saveNickname"
+        />
         <Button class="icon-btn" size="small" :loading="savingNickname" @click="saveNickname">
           <AppIcon name="check" :size="14" />
         </Button>
@@ -192,7 +218,7 @@ onMounted(load)
       </template>
       <span class="pill">{{ auth.claims?.role }}</span>
     </header>
-    <Message v-if="nicknameError" severity="error">{{ nicknameError }}</Message>
+    <Message v-if="nicknameError" id="nickname-error" severity="error">{{ nicknameError }}</Message>
 
     <div class="card shop-cta">
       <div>
@@ -209,55 +235,117 @@ onMounted(load)
 
     <Message v-if="error" severity="error">{{ error }}</Message>
 
-    <form class="card" @submit.prevent="save">
+    <form class="card" novalidate @submit.prevent="save">
       <h2>Contact details</h2>
       <p class="field-hint">Optional — add these if you'd like them on file.</p>
 
       <div class="field">
         <label for="email">Email address</label>
-        <InputText id="email" v-model="email" type="email" placeholder="you@example.com" />
+        <InputText
+          id="email"
+          v-model="email"
+          type="email"
+          placeholder="you@example.com"
+          autocomplete="email"
+          autocapitalize="off"
+          spellcheck="false"
+          :invalid="!!emailError"
+          :aria-invalid="!!emailError"
+          :aria-describedby="emailError ? 'email-error' : undefined"
+        />
+        <Message v-if="emailError" id="email-error" severity="error" size="small" variant="simple">
+          {{ emailError }}
+        </Message>
       </div>
       <div class="field">
         <label for="addressLine1">Address line 1</label>
-        <InputText id="addressLine1" v-model="addressLine1" />
+        <InputText id="addressLine1" v-model="addressLine1" autocomplete="address-line1" />
       </div>
       <div class="field">
         <label for="addressLine2">Address line 2</label>
-        <InputText id="addressLine2" v-model="addressLine2" />
+        <InputText id="addressLine2" v-model="addressLine2" autocomplete="address-line2" />
       </div>
       <div class="row">
         <div class="field" style="flex: 1; min-width: 8rem">
           <label for="postalCode">Postal code</label>
-          <InputText id="postalCode" v-model="postalCode" />
+          <InputText id="postalCode" v-model="postalCode" autocomplete="postal-code" />
         </div>
         <div class="field" style="flex: 2; min-width: 10rem">
           <label for="city">City</label>
-          <InputText id="city" v-model="city" />
+          <InputText id="city" v-model="city" autocomplete="address-level2" />
         </div>
       </div>
       <div class="field">
         <label for="country">Country</label>
-        <InputText id="country" v-model="country" />
+        <InputText id="country" v-model="country" autocomplete="country-name" />
       </div>
 
       <Button type="submit" label="Save changes" :loading="saving" />
     </form>
 
-    <form class="card" @submit.prevent="changePassword">
+    <form class="card" novalidate @submit.prevent="changePassword">
       <h2>Change password</h2>
       <Message v-if="passwordError" severity="error">{{ passwordError }}</Message>
 
       <div class="field">
         <label for="currentPassword">Current password</label>
-        <InputText id="currentPassword" v-model="currentPassword" type="password" />
+        <Password
+          v-model="currentPassword"
+          input-id="currentPassword"
+          :feedback="false"
+          toggle-mask
+          fluid
+          :invalid="!!currentPasswordError"
+          :input-props="{
+            required: true,
+            autocomplete: 'current-password',
+            'aria-invalid': !!currentPasswordError,
+            'aria-describedby': currentPasswordError ? 'currentPassword-error' : undefined,
+          }"
+        />
+        <Message v-if="currentPasswordError" id="currentPassword-error" severity="error" size="small" variant="simple">
+          {{ currentPasswordError }}
+        </Message>
       </div>
       <div class="field">
         <label for="newPassword">New password</label>
-        <InputText id="newPassword" v-model="newPassword" type="password" />
+        <Password
+          v-model="newPassword"
+          input-id="newPassword"
+          :feedback="false"
+          toggle-mask
+          fluid
+          :invalid="!!newPasswordError"
+          :input-props="{
+            required: true,
+            autocomplete: 'new-password',
+            'aria-invalid': !!newPasswordError,
+            'aria-describedby': newPasswordError ? 'newPassword-error' : undefined,
+          }"
+        />
+        <Message v-if="newPasswordError" id="newPassword-error" severity="error" size="small" variant="simple">
+          {{ newPasswordError }}
+        </Message>
       </div>
       <div class="field">
         <label for="confirmPassword">Confirm new password</label>
-        <InputText id="confirmPassword" v-model="confirmPassword" type="password" />
+        <Password
+          v-model="confirmPassword"
+          input-id="confirmPassword"
+          :feedback="false"
+          toggle-mask
+          fluid
+          :invalid="!!confirmPasswordError"
+          :input-props="{
+            required: true,
+            autocomplete: 'new-password',
+            'aria-invalid': !!confirmPasswordError,
+            'aria-describedby': confirmPasswordError ? 'confirmPassword-error' : undefined,
+          }"
+        />
+        <Message v-if="confirmPasswordError" id="confirmPassword-error" severity="error" size="small" variant="simple">
+          {{ confirmPasswordError }}
+        </Message>
       </div>
 
       <Button type="submit" label="Change password" :loading="changingPassword" />

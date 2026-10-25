@@ -5,6 +5,7 @@ import Column from 'primevue/column'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import InputText from 'primevue/inputtext'
+import Password from 'primevue/password'
 import Select from 'primevue/select'
 import Tag from 'primevue/tag'
 import Message from 'primevue/message'
@@ -12,6 +13,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import * as api from '../lib/api'
 import type { AdminProfileUpdate, Role, UserSummary } from '../lib/api'
+import { errorMessage } from '../lib/messages'
 import AppIcon from '../components/AppIcon.vue'
 import { useAuthStore } from '../stores/auth'
 
@@ -58,7 +60,7 @@ async function refresh() {
   try {
     users.value = await api.listUsers(auth.token)
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'failed to load users'
+    error.value = errorMessage(e, 'Could not load users.')
   }
 }
 
@@ -70,7 +72,7 @@ async function submitCreate() {
     copied.value = false
     await refresh()
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'failed to create user'
+    error.value = errorMessage(e, 'Could not create the user.')
   }
 }
 
@@ -94,7 +96,7 @@ async function runRowAction(user: UserSummary, failureSummary: string, action: (
     toast.add({
       severity: 'error',
       summary: failureSummary,
-      detail: e instanceof Error ? e.message : undefined,
+      detail: errorMessage(e, failureSummary),
       life: 5000,
     })
   } finally {
@@ -213,12 +215,7 @@ async function submitEdit() {
     editDialogOpen.value = false
     await refresh()
   } catch (e) {
-    editError.value =
-      e instanceof api.ApiError && e.status === 409
-        ? 'that nickname is already taken'
-        : e instanceof Error
-          ? e.message
-          : 'failed to update user'
+    editError.value = errorMessage(e, 'Could not update the user.')
   } finally {
     editSaving.value = false
   }
@@ -240,7 +237,7 @@ async function submitPassword() {
     toast.add({ severity: 'success', summary: 'Password set', life: 2500 })
     passwordDialogOpen.value = false
   } catch (e) {
-    passwordError.value = e instanceof Error ? e.message : 'failed to set password'
+    passwordError.value = errorMessage(e, 'Could not set the password.')
   } finally {
     passwordSaving.value = false
   }
@@ -399,13 +396,14 @@ onMounted(refresh)
     <Dialog v-model:visible="editDialogOpen" header="Edit user" modal>
       <div class="stack">
         <Message v-if="editError" severity="error">{{ editError }}</Message>
+        <p class="field-hint">Current values are not shown. Empty fields are left unchanged.</p>
         <div class="field">
           <label for="editNickname">Nickname</label>
-          <InputText id="editNickname" v-model="editFields.nickname" />
+          <InputText id="editNickname" v-model="editFields.nickname" autocapitalize="off" spellcheck="false" />
         </div>
         <div class="field">
           <label for="editEmail">Email</label>
-          <InputText id="editEmail" v-model="editFields.email" type="email" />
+          <InputText id="editEmail" v-model="editFields.email" type="email" autocapitalize="off" spellcheck="false" />
         </div>
         <div class="field">
           <label for="editPhone">Phone</label>
@@ -455,7 +453,14 @@ onMounted(refresh)
         <Message v-if="passwordError" severity="error">{{ passwordError }}</Message>
         <div class="field">
           <label for="newUserPassword">New password</label>
-          <InputText id="newUserPassword" v-model="newPassword" type="password" />
+          <Password
+            v-model="newPassword"
+            input-id="newUserPassword"
+            :feedback="false"
+            toggle-mask
+            fluid
+            :input-props="{ autocomplete: 'new-password' }"
+          />
         </div>
         <Button class="icon-btn" :loading="passwordSaving" @click="submitPassword">
           <AppIcon name="key" :size="15" />
