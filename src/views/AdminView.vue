@@ -496,6 +496,6 @@ onMounted(refresh)
   }
 }
 .users-table :deep(.row-frozen) > td:first-child {
-  box-shadow: inset 3px 0 0 0 var(--frost);
+  border-left: 3px solid var(--frost);
 }
 </style>

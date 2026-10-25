@@ -49,14 +49,13 @@ function logout() {
         @click="menuOpen = !menuOpen"
       >
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-          <path d="M4 7 H20" :class="['bar', 'bar-top', { open: menuOpen }]" />
-          <path d="M4 12 H20" :class="['bar', 'bar-mid', { open: menuOpen }]" />
-          <path d="M4 17 H20" :class="['bar', 'bar-bottom', { open: menuOpen }]" />
+          <path v-if="menuOpen" d="M6 6 L18 18 M18 6 L6 18" />
+          <path v-else d="M4 7 H20 M4 12 H20 M4 17 H20" />
         </svg>
       </button>
     </div>
 
-    <nav v-if="menuOpen" class="links links-mobile sheet-in" aria-label="Main">
+    <nav v-if="menuOpen" class="links links-mobile" aria-label="Main">
       <template v-if="auth.isAuthenticated">
         <RouterLink v-if="auth.isAdmin" to="/admin" @click="menuOpen = false">Admin</RouterLink>
         <span class="nickname">{{ auth.nickname }}</span>
@@ -69,9 +68,7 @@ function logout() {
     </nav>
   </header>
   <main id="main" ref="main" class="main" tabindex="-1">
-    <RouterView v-slot="{ Component, route }">
-      <component :is="Component" :key="route.path" class="rise" />
-    </RouterView>
+    <RouterView />
   </main>
 </template>
 
@@ -100,10 +97,6 @@ function logout() {
   font-size: 1.05rem;
   color: var(--ice);
   text-decoration: none;
-  transition: transform 0.2s var(--ease-out-soft);
-}
-.brand:hover {
-  transform: rotate(-2deg);
 }
 .links {
   display: flex;
@@ -111,33 +104,17 @@ function logout() {
   gap: 1.25rem;
 }
 .links a {
-  position: relative;
   text-decoration: none;
   color: rgba(232, 241, 242, 0.65);
   font-weight: 500;
   padding: 0.2rem 0;
-  transition: color 0.15s ease;
-}
-.links a::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -0.15rem;
-  height: 2px;
-  border-radius: 2px;
-  background: var(--mint);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.2s var(--ease-out-soft);
 }
 .links a:hover,
 .links a.router-link-active {
   color: var(--ice);
 }
-.links a:hover::after,
-.links a.router-link-active::after {
-  transform: scaleX(1);
+.links a.router-link-active {
+  border-bottom: 2px solid var(--mint);
 }
 /* Log out is an action, not a destination — no underline, a quiet outline instead. */
 .links .ghost {
@@ -174,25 +151,9 @@ function logout() {
   min-height: 2.75rem;
   border-radius: 0.5rem;
   cursor: pointer;
-  transition: background-color 0.15s ease;
 }
 .menu-btn:hover {
   background: rgba(232, 241, 242, 0.1);
-}
-.bar {
-  transform-origin: center;
-  transition:
-    transform 0.3s var(--ease-out-soft),
-    opacity 0.2s ease;
-}
-.bar-top.open {
-  transform: translateY(5px) rotate(45deg);
-}
-.bar-mid.open {
-  opacity: 0;
-}
-.bar-bottom.open {
-  transform: translateY(-5px) rotate(-45deg);
 }
 .links-mobile a {
   display: flex;
