@@ -10,9 +10,11 @@ jobs:
     runs-on: host
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Test
         run: |
-          docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD":/w -w /w node:22-alpine sh -c "npm ci && npm test && npm i --no-save @vitest/coverage-v8@^4.1.12 && npx vitest run --coverage.enabled --coverage.provider=v8 --coverage.include='src/**/*.{ts,vue}' --coverage.reporter=text-summary --coverage.reporter=html && npm run build"
+          docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD":/w -w /w node:22-alpine sh -c "npm ci && npm test && npm i --no-save @vitest/coverage-v8@^4.1.12 && npx vitest run --coverage.enabled --coverage.provider=v8 --coverage.include='src/**/*.{ts,vue}' --coverage.reporter=text-summary --coverage.reporter=cobertura --coverage.reporter=html && npm run build"
       - name: Upload coverage report
         if: always()
         uses: actions/upload-artifact@v3
@@ -41,6 +43,11 @@ jobs:
               if a["name"] in stale:
                   call(api + "/" + str(a["id"]), "DELETE")
           EOF
+      - name: Enforce 80% coverage on changed lines
+        run: |
+          git fetch -q origin master
+          git diff origin/master...HEAD > pr.diff
+          docker run --rm -v "$PWD":/w -w /w python:3.13-alpine sh -c "pip install -q diff-cover && diff-cover coverage/cobertura-coverage.xml --diff-file pr.diff --fail-under=80"
   build:
     needs: test
     if: github.ref == 'refs/heads/master'
