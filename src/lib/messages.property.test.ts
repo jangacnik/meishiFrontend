@@ -62,6 +62,14 @@ describe('errorMessage', () => {
     },
   )
 
+  test.prop([serverMessage, fc.constantFrom(400, 409)])('400/409 never yields an empty string', (message, code) => {
+    expect(errorMessage(new ApiError(message, code), FALLBACK)).not.toBe('')
+  })
+
+  it('falls back for a whitespace-only 400 message', () => {
+    expect(errorMessage(new ApiError('   ', 400), FALLBACK)).toBe(FALLBACK)
+  })
+
   it('capitalises a non-BMP first letter', () => {
     expect(errorMessage(new ApiError('\u{10428}bc', 400), FALLBACK)).toBe('\u{10400}bc.')
   })
