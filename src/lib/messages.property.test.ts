@@ -1,4 +1,4 @@
-import { describe, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { fc, test } from '@fast-check/vitest'
 import { ApiError } from './api'
 import { errorMessage } from './messages'
@@ -53,12 +53,16 @@ describe('errorMessage', () => {
     expect(errorMessage(new ApiError(once, code), FALLBACK)).toBe(once)
   })
 
-  test.prop([meaningfulMessage.filter((text) => /^[\x20-\x7e]*$/.test(text)), fc.constantFrom(400, 409)])(
-    'ASCII messages start with an upper-case letter or a non-letter',
+  test.prop([meaningfulMessage, fc.constantFrom(400, 409)])(
+    'messages start with an upper-case code point or a non-letter',
     (message, code) => {
-      const first = errorMessage(new ApiError(message, code), FALLBACK).charAt(0)
+      const [first] = Array.from(errorMessage(new ApiError(message, code), FALLBACK))
 
       expect(first).toBe(first.toUpperCase())
     },
   )
+
+  it('capitalises a non-BMP first letter', () => {
+    expect(errorMessage(new ApiError('\u{10428}bc', 400), FALLBACK)).toBe('\u{10400}bc.')
+  })
 })

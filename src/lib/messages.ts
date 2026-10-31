@@ -3,7 +3,8 @@ import { ApiError } from './api'
 function sentenceCase(text: string): string {
   const trimmed = text.trim()
   if (!trimmed) return trimmed
-  const capitalized = trimmed.charAt(0).toUpperCase() + trimmed.slice(1)
+  const [first] = Array.from(trimmed)
+  const capitalized = first.toUpperCase() + trimmed.slice(first.length)
   return /[.!?]$/.test(capitalized) ? capitalized : `${capitalized}.`
 }
 
