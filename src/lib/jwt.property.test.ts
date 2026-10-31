@@ -48,6 +48,17 @@ describe('decodeJwt', () => {
     expect(() => decodeJwt(tokenWithPayload(toBase64Url(text, false)))).toThrow(Error)
   })
 
+  test.prop([fc.oneof(fc.integer(), fc.string(), fc.boolean(), fc.constant(null), fc.array(fc.integer()))])(
+    'rejects JSON payloads that are not objects',
+    (value) => {
+      expect(() => decodeJwt(tokenWithPayload(toBase64Url(JSON.stringify(value), false)))).toThrow(Error)
+    },
+  )
+
+  it.each(['5', 'null', '[]'])('rejects the non-object payload %s', (json) => {
+    expect(() => decodeJwt(tokenWithPayload(toBase64Url(json, false)))).toThrow('JWT payload is not an object')
+  })
+
   it('reads claims without verifying the signature, so they are UI hints only', () => {
     const forged = tokenWithPayload(toBase64Url(JSON.stringify({ sub: 'x', nickname: 'n', role: 'ADMIN', exp: 1 }), false))
 
