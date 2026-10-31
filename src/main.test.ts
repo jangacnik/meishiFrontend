@@ -3,6 +3,7 @@ import { flushPromises } from '@vue/test-utils'
 
 describe('main', () => {
   afterEach(() => {
+    vi.unstubAllGlobals()
     document.body.innerHTML = ''
     localStorage.clear()
     vi.resetModules()
@@ -25,6 +26,5 @@ describe('main', () => {
     await vi.waitFor(() => expect(localStorage.getItem('meishi.token')).toBeNull())
     await vi.waitFor(() => expect(router.currentRoute.value.name).toBe('login'))
     expect(router.currentRoute.value.query).toMatchObject({ redirect: '/', expired: '1' })
-    vi.unstubAllGlobals()
   })
 })

@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { flushPromises, mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import PrimeVue from 'primevue/config'
 import Select from 'primevue/select'
@@ -60,6 +60,9 @@ const button = (wrapper: Wrapper, text: string) => wrapper.findAll('button').fin
 
 const lastConfirm = () => confirmRequire.mock.calls.at(-1)![0]
 
+enableAutoUnmount(afterEach)
+afterEach(() => vi.unstubAllGlobals())
+
 beforeEach(() => {
   localStorage.clear()
   confirmRequire.mockReset()
@@ -112,7 +115,7 @@ describe('AdminView listing', () => {
     expect(wrapper.text()).toContain('alice')
   })
 
-  it('disables role, freeze and delete controls for the signed-in admin only', async () => {
+  it('flags only the signed-in admin as self and disables just their two role selects', async () => {
     const wrapper = await mountAdmin()
 
     expect(actionsFor(wrapper, 'self').props('isSelf')).toBe(true)
@@ -136,7 +139,7 @@ describe('AdminView row actions', () => {
     expect(api.listUsers).toHaveBeenCalledTimes(2)
   })
 
-  it('confirms then freezes and unfreezes', async () => {
+  it('confirms then freezes; unfreezes immediately', async () => {
     const wrapper = await mountAdmin()
 
     actionsFor(wrapper, 'u2').vm.$emit('freeze')
@@ -234,7 +237,6 @@ describe('AdminView create user', () => {
     expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/register?key=k1`)
     expect(toastAdd).toHaveBeenLastCalledWith(expect.objectContaining({ summary: 'Copied to clipboard' }))
     expect(wrapper.text()).toContain('Copied')
-    vi.unstubAllGlobals()
   })
 
   it('tells the user to copy manually when the clipboard is unavailable', async () => {
@@ -249,7 +251,6 @@ describe('AdminView create user', () => {
     await flushPromises()
 
     expect(toastAdd).toHaveBeenLastCalledWith(expect.objectContaining({ severity: 'error', summary: 'Could not copy' }))
-    vi.unstubAllGlobals()
   })
 })
 
@@ -317,10 +318,12 @@ describe('AdminView set password', () => {
     vi.mocked(api.adminSetPassword).mockRejectedValue(new ApiError('too short', 400))
     const wrapper = await mountAdmin()
     await openPassword(wrapper)
+    await wrapper.get('#newUserPassword').setValue('abc')
 
     await wrapper.get('form').trigger('submit')
     await flushPromises()
 
+    expect(api.adminSetPassword).toHaveBeenCalledWith(expect.any(String), 'u2', 'abc')
     expect(wrapper.text()).toContain('Too short.')
   })
 })

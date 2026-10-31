@@ -24,6 +24,7 @@ describe('api endpoints', () => {
   beforeEach(() => {
     fetchMock.mockReset()
     vi.stubGlobal('fetch', fetchMock)
+    api.setUnauthorizedHandler(() => {})
   })
   afterEach(() => vi.unstubAllGlobals())
 
@@ -91,6 +92,17 @@ describe('api endpoints', () => {
     respond(401, { error: 'wrong password' })
 
     await expect(api.changeMyPassword('tok', 'a', 'b')).rejects.toMatchObject({ status: 401 })
+
+    expect(handler).not.toHaveBeenCalled()
+  })
+
+  it('does not call the unauthorized handler on 401 when no token was sent', async () => {
+    const handler = vi.fn()
+    api.setUnauthorizedHandler(handler)
+    respond(401, { error: 'bad credentials' })
+
+    await expect(api.login('a', 'b')).rejects.toMatchObject({ status: 401 })
+    await expect(api.getMe('')).rejects.toMatchObject({ status: 401 })
 
     expect(handler).not.toHaveBeenCalled()
   })

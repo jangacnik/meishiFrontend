@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { flushPromises, mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import PrimeVue from 'primevue/config'
 import { createMemoryHistory, createRouter } from 'vue-router'
@@ -41,6 +41,8 @@ async function mountAt(component: object, path: string) {
 async function fill(wrapper: ReturnType<typeof mount>, selector: string, value: string) {
   await wrapper.get(selector).setValue(value)
 }
+
+enableAutoUnmount(afterEach)
 
 beforeEach(() => {
   localStorage.clear()

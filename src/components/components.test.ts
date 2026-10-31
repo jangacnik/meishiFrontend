@@ -44,21 +44,35 @@ describe('AppIcon', () => {
 })
 
 describe('BrandMark', () => {
-  it('renders an svg', () => {
-    expect(mount(BrandMark).element.tagName.toLowerCase()).toBe('svg')
+  it('draws the card mark in a 64x64 viewBox, hidden from assistive tech', () => {
+    const wrapper = mount(BrandMark)
+
+    expect(wrapper.attributes('viewBox')).toBe('0 0 64 64')
+    expect(wrapper.attributes('aria-hidden')).toBe('true')
+    expect(wrapper.findAll('rect')).toHaveLength(4)
+    expect(wrapper.findAll('circle')).toHaveLength(2)
+  })
+
+  it('sizes itself from the size prop, defaulting to 24', () => {
+    expect(mount(BrandMark).attributes('width')).toBe('24')
+    expect(mount(BrandMark, { props: { size: 40 } }).attributes('height')).toBe('40')
   })
 })
 
 describe('UserActions', () => {
-  it('emits edit, setPassword, freeze and remove from the matching buttons', async () => {
+  it.each([
+    ['Edit', 'edit'],
+    ['Set password', 'setPassword'],
+    ['Freeze', 'freeze'],
+    ['Delete user', 'remove'],
+  ])('the %s button emits only %s, once', async (label, event) => {
     const wrapper = mountActions()
 
-    await button(wrapper, 'Edit').trigger('click')
-    await button(wrapper, 'Set password').trigger('click')
-    await button(wrapper, 'Freeze').trigger('click')
-    await button(wrapper, 'Delete user').trigger('click')
+    await button(wrapper, label).trigger('click')
 
-    expect(Object.keys(wrapper.emitted())).toEqual(expect.arrayContaining(['edit', 'setPassword', 'freeze', 'remove']))
+    expect(Object.keys(wrapper.emitted())).toEqual(expect.arrayContaining([event]))
+    expect(wrapper.emitted(event)).toHaveLength(1)
+    expect(Object.keys(wrapper.emitted()).filter((name) => name === event || ['edit', 'setPassword', 'freeze', 'unfreeze', 'remove'].includes(name))).toEqual([event])
   })
 
   it('shows Unfreeze instead of Freeze for a frozen account and emits unfreeze', async () => {

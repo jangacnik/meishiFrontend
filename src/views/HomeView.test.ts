@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { flushPromises, mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import PrimeVue from 'primevue/config'
 import HomeView from './HomeView.vue'
@@ -63,6 +63,8 @@ const submitForm = async (wrapper: Awaited<ReturnType<typeof mountHome>>, title:
 const buttonByText = (wrapper: Awaited<ReturnType<typeof mountHome>>, text: string) =>
   wrapper.findAll('button').find((b) => b.text().includes(text))!
 
+enableAutoUnmount(afterEach)
+
 beforeEach(() => {
   localStorage.clear()
   confirmRequire.mockReset()
@@ -80,14 +82,14 @@ describe('HomeView', () => {
     const wrapper = await mountHome()
 
     expect(wrapper.get('h1').text()).toBe('Welcome, sushi')
-    expect(wrapper.text()).toContain('Member')
+    expect(wrapper.get('.pill').text()).toBe('Member')
     expect((wrapper.get('#email').element as HTMLInputElement).value).toBe('a@b.co')
     expect((wrapper.get('#city').element as HTMLInputElement).value).toBe('Kyoto')
     expect((wrapper.get('#country').element as HTMLInputElement).value).toBe('')
   })
 
   it('shows the Admin pill for admins', async () => {
-    expect((await mountHome('ADMIN')).text()).toContain('Admin')
+    expect((await mountHome('ADMIN')).get('.pill').text()).toBe('Admin')
   })
 
   it('offers a retry when the profile cannot be loaded', async () => {
