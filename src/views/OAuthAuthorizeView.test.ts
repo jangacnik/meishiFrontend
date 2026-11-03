@@ -116,6 +116,18 @@ describe('OAuthAuthorizeView', () => {
     expect(leaveTo).not.toHaveBeenCalled()
   })
 
+  it('sends the user to login and back here when the server rejects the session', async () => {
+    signIn()
+    vi.mocked(api.authorize).mockRejectedValue(new ApiError('unauthorized', 401))
+
+    const { router } = await mountAt(authorizePath)
+
+    expect(router.currentRoute.value.name).toBe('login')
+    expect(router.currentRoute.value.query.redirect).toBe(authorizePath)
+    expect(localStorage.getItem('meishi.token')).toBeNull()
+    expect(leaveTo).not.toHaveBeenCalled()
+  })
+
   it('shows a retry message when the server is down', async () => {
     vi.mocked(api.getOAuthClient).mockRejectedValue(new ApiError('boom', 503))
 

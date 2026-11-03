@@ -54,6 +54,11 @@ onMounted(async () => {
     const { redirectUrl } = await api.authorize(auth.token, authorizeRequest)
     leaveTo(redirectUrl)
   } catch (e) {
+    if (e instanceof api.ApiError && e.status === 401) {
+      auth.logout()
+      await router.replace({ name: 'login', query: { redirect: route.fullPath, expired: '1' } })
+      return
+    }
     error.value =
       e instanceof api.ApiError && e.status === 400 ? INVALID_LINK : errorMessage(e, 'Sign-in failed. Try again.')
   }
