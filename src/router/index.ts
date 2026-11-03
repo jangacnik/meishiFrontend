@@ -27,6 +27,12 @@ const router = createRouter({
       meta: { title: 'Register', guestOnly: true },
     },
     {
+      path: '/admin',
+      name: 'admin',
+      component: () => import('../views/AdminView.vue'),
+      meta: { title: 'Users', requiresAuth: true, requiresAdmin: true },
+    },
+    {
       path: '/profile',
       name: 'profile',
       component: () => import('../views/ProfileView.vue'),
@@ -37,12 +43,6 @@ const router = createRouter({
       name: 'logout',
       component: () => import('../views/LogoutView.vue'),
       meta: { title: 'Sign out' },
-    },
-    {
-      path: '/admin',
-      name: 'admin',
-      component: () => import('../views/AdminView.vue'),
-      meta: { title: 'Users', requiresAuth: true, requiresAdmin: true },
     },
     {
       path: '/:pathMatch(.*)*',
