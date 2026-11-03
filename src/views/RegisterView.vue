@@ -8,13 +8,14 @@ import Message from 'primevue/message'
 import { errorMessage } from '../lib/messages'
 import BrandMark from '../components/BrandMark.vue'
 import { useAuthStore } from '../stores/auth'
+import { localPath } from '../lib/navigation'
 
 const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
 
 const activationKey = ref(typeof route.query.key === 'string' ? route.query.key : '')
-if (route.query.key !== undefined) router.replace({ name: 'register' })
+if (route.query.key !== undefined) router.replace({ name: 'register', query: { redirect: route.query.redirect } })
 
 const nickname = ref('')
 const password = ref('')
@@ -39,7 +40,7 @@ async function submit() {
   loading.value = true
   try {
     await auth.register(activationKey.value, nickname.value, password.value)
-    router.push('/')
+    router.push(localPath(route.query.redirect))
   } catch (e) {
     error.value = errorMessage(e, 'Registration failed. Check your activation key and try again.')
   } finally {
@@ -142,7 +143,7 @@ async function submit() {
         <Message v-if="error" severity="error">{{ error }}</Message>
         <Button type="submit" label="Register" :loading="loading" fluid />
       </form>
-      <p class="muted">Already registered? <RouterLink to="/login">Log in</RouterLink></p>
+      <p class="muted">Already registered? <RouterLink :to="{ name: 'login', query: { redirect: route.query.redirect } }">Log in</RouterLink></p>
     </div>
   </div>
 </template>
