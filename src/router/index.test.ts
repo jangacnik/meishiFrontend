@@ -51,6 +51,19 @@ describe('router guards', () => {
     expect((await visit('/admin')).name).toBe('home')
   })
 
+  it('keeps the app return parameters when an anonymous visitor is sent from profile to login', async () => {
+    const route = await visit('/profile?client_id=omiyage&return_uri=https%3A%2F%2Fo.example%2Faccount')
+
+    expect(route.name).toBe('login')
+    expect(route.query.redirect).toBe('/profile?client_id=omiyage&return_uri=https%3A%2F%2Fo.example%2Faccount')
+  })
+
+  it('opens profile and logout for a signed-in user', async () => {
+    signIn('USER')
+    expect((await visit('/profile')).name).toBe('profile')
+    expect((await visit('/logout')).name).toBe('logout')
+  })
+
   it('lets admins into the admin page', async () => {
     signIn('ADMIN')
 

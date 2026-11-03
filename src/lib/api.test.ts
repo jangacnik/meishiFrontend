@@ -20,6 +20,15 @@ function lastCall() {
   }
 }
 
+const authorizeRequest: api.AuthorizeRequest = {
+  response_type: 'code',
+  client_id: 'omiyage',
+  redirect_uri: 'https://o.example/cb',
+  state: 's',
+  code_challenge: 'c',
+  code_challenge_method: 'S256',
+}
+
 describe('api endpoints', () => {
   beforeEach(() => {
     fetchMock.mockReset()
@@ -42,6 +51,8 @@ describe('api endpoints', () => {
     ['changeMyPassword', () => api.changeMyPassword('tok', 'old', 'new'), 'PATCH', '/api/users/me/password', { oldPassword: 'old', newPassword: 'new' }, true],
     ['adminUpdateUser', () => api.adminUpdateUser('tok', 'u1', { email: 'a@b.c' }), 'PATCH', '/api/users/u1/profile', { email: 'a@b.c' }, true],
     ['adminSetPassword', () => api.adminSetPassword('tok', 'u1', 'pw'), 'PATCH', '/api/users/u1/password', { newPassword: 'pw' }, true],
+    ['getOAuthClient', () => api.getOAuthClient({ client_id: 'omiyage', redirect_uri: 'https://o.example/cb?a=1&b' }), 'GET', '/api/oauth/client?client_id=omiyage&redirect_uri=https%3A%2F%2Fo.example%2Fcb%3Fa%3D1%26b', undefined, false],
+    ['authorize', () => api.authorize('tok', authorizeRequest), 'POST', '/api/oauth/authorize', authorizeRequest, true],
   ]
 
   it.each(cases)('%s sends the right request', async (_name, call, method, url, body, authenticated) => {
