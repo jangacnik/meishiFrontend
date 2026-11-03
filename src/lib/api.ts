@@ -168,3 +168,25 @@ export function adminUpdateUser(token: string, id: string, fields: AdminProfileU
 export function adminSetPassword(token: string, id: string, newPassword: string): Promise<void> {
   return request(`/users/${id}/password`, { method: 'PATCH', body: JSON.stringify({ newPassword }) }, token)
 }
+
+export interface OAuthClientInfo {
+  clientId: string
+  name: string
+}
+
+export interface AuthorizeRequest {
+  response_type: string
+  client_id: string
+  redirect_uri: string
+  state: string
+  code_challenge: string
+  code_challenge_method: string
+}
+
+export function getOAuthClient(query: Record<string, string>): Promise<OAuthClientInfo> {
+  return request(`/oauth/client?${new URLSearchParams(query)}`)
+}
+
+export function authorize(token: string, authorizeRequest: AuthorizeRequest): Promise<{ redirectUrl: string }> {
+  return request('/oauth/authorize', { method: 'POST', body: JSON.stringify(authorizeRequest) }, token)
+}

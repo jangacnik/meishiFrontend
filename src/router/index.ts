@@ -27,6 +27,12 @@ const router = createRouter({
       meta: { title: 'Register', guestOnly: true },
     },
     {
+      path: '/oauth/authorize',
+      name: 'oauth-authorize',
+      component: () => import('../views/OAuthAuthorizeView.vue'),
+      meta: { title: 'Sign in' },
+    },
+    {
       path: '/admin',
       name: 'admin',
       component: () => import('../views/AdminView.vue'),

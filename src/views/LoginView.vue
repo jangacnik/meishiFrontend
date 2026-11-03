@@ -9,6 +9,7 @@ import { errorMessage } from '../lib/messages'
 import { ApiError } from '../lib/api'
 import BrandMark from '../components/BrandMark.vue'
 import { useAuthStore } from '../stores/auth'
+import { localPath } from '../lib/navigation'
 
 const router = useRouter()
 const route = useRoute()
@@ -26,11 +27,6 @@ watch(password, () => (passwordError.value = null))
 
 const sessionExpired = route.query.expired === '1'
 
-function redirectTarget(): string {
-  const redirect = route.query.redirect
-  return typeof redirect === 'string' && redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '/'
-}
-
 async function submit() {
   error.value = null
   nicknameError.value = nickname.value.trim() ? null : 'Enter your nickname.'
@@ -39,7 +35,7 @@ async function submit() {
   loading.value = true
   try {
     await auth.login(nickname.value, password.value)
-    router.push(redirectTarget())
+    router.push(localPath(route.query.redirect))
   } catch (e) {
     error.value =
       e instanceof ApiError && e.status === 401
@@ -103,7 +99,7 @@ async function submit() {
         <Message v-if="error" severity="error">{{ error }}</Message>
         <Button type="submit" label="Log in" :loading="loading" fluid />
       </form>
-      <p class="muted">Have an activation key? <RouterLink to="/register">Register</RouterLink></p>
+      <p class="muted">Have an activation key? <RouterLink :to="{ name: 'register', query: { redirect: route.query.redirect } }">Register</RouterLink></p>
     </div>
   </div>
 </template>
