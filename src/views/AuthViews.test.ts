@@ -27,7 +27,7 @@ async function mountAt(component: object, path: string) {
     history: createMemoryHistory(),
     routes: [
       { path: '/', component: { template: '<div />' } },
-      { path: '/login', component: LoginView },
+      { path: '/login', name: 'login', component: LoginView },
       { path: '/register', name: 'register', component: RegisterView },
       { path: '/elsewhere', component: { template: '<div />' } },
     ],
@@ -112,6 +112,12 @@ describe('LoginView', () => {
     },
   )
 
+  it('links to register with the same redirect target', async () => {
+    const { wrapper } = await mountAt(LoginView, '/login?redirect=/elsewhere')
+
+    expect(wrapper.get('a[href^="/register"]').attributes('href')).toBe('/register?redirect=/elsewhere')
+  })
+
   it('shows a credentials message on 401', async () => {
     vi.mocked(api.login).mockRejectedValue(new ApiError('bad', 401))
     const { wrapper } = await mountAt(LoginView, '/login')
@@ -145,6 +151,33 @@ describe('LoginView', () => {
 })
 
 describe('RegisterView', () => {
+  it('keeps the redirect target when it removes the activation key from the URL', async () => {
+    const { router } = await mountAt(RegisterView, '/register?key=abc123&redirect=/elsewhere')
+    await flushPromises()
+
+    expect(router.currentRoute.value.query).toEqual({ redirect: '/elsewhere' })
+  })
+
+  it('returns to the redirect target after registering', async () => {
+    vi.mocked(api.register).mockResolvedValue({ token: makeToken() })
+    const { wrapper, router } = await mountAt(RegisterView, '/register?redirect=/elsewhere')
+
+    await fill(wrapper, '#activationKey', 'k')
+    await fill(wrapper, '#nickname', 'n')
+    await fill(wrapper, '#password', 'pw')
+    await fill(wrapper, '#confirmPassword', 'pw')
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+
+    expect(router.currentRoute.value.path).toBe('/elsewhere')
+  })
+
+  it('links to login with the same redirect target', async () => {
+    const { wrapper } = await mountAt(RegisterView, '/register?redirect=/elsewhere')
+
+    expect(wrapper.get('a[href^="/login"]').attributes('href')).toBe('/login?redirect=/elsewhere')
+  })
+
   it('prefills the activation key from the link and removes it from the URL', async () => {
     const { wrapper, router } = await mountAt(RegisterView, '/register?key=abc123')
     await flushPromises()
