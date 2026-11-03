@@ -1,6 +1,4 @@
-# NodePort on the LAN at http://<node-ip>:30084/. externalTrafficPolicy: Local keeps the client address
-# (no SNAT) so nginx can trust X-Real-IP from the edge proxy only. It also means only nodes that run a
-# meishifrontend pod answer on 30084: the edge proxy must forward to such a node.
+# NodePort - reachable on the LAN at http://<any-k8s-node-ip>:30084/
 apiVersion: v1
 kind: Service
 metadata:
@@ -9,7 +7,6 @@ metadata:
     app: meishifrontend
 spec:
   type: NodePort
-  externalTrafficPolicy: Local
   selector:
     app: meishifrontend
   ports:
