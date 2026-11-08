@@ -99,7 +99,7 @@ async function submit() {
         <Message v-if="error" severity="error">{{ error }}</Message>
         <Button type="submit" label="Log in" :loading="loading" fluid />
       </form>
-      <p class="muted">Have an activation key? <RouterLink :to="{ name: 'register', query: { redirect: route.query.redirect } }">Register</RouterLink></p>
+      <p class="muted auth-switch">Have an activation key? <RouterLink :to="{ name: 'register', query: { redirect: route.query.redirect } }">Register</RouterLink></p>
     </div>
   </div>
 </template>

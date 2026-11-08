@@ -309,6 +309,27 @@ code {
   transition: none !important;
 }
 
+/* 44px tap targets: PrimeVue inputs are ~30px tall by default. */
+.p-inputtext {
+  min-height: 2.75rem;
+}
+
+/* The "Register" / "Log in" link under each auth form is inline text; make it a 44px target. */
+.auth-switch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0;
+}
+
+.auth-switch a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0 0.35rem;
+}
+
 @media (max-width: 640px) {
   .p-button,
   .p-select {

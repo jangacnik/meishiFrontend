@@ -118,6 +118,12 @@ describe('LoginView', () => {
     expect(wrapper.get('a[href^="/register"]').attributes('href')).toBe('/register?redirect=/elsewhere')
   })
 
+  it('marks the register link for the large tap target', async () => {
+    const { wrapper } = await mountAt(LoginView, '/login')
+
+    expect(wrapper.get('a[href^="/register"]').element.parentElement?.classList.contains('auth-switch')).toBe(true)
+  })
+
   it('shows a credentials message on 401', async () => {
     vi.mocked(api.login).mockRejectedValue(new ApiError('bad', 401))
     const { wrapper } = await mountAt(LoginView, '/login')
@@ -170,6 +176,12 @@ describe('RegisterView', () => {
     await flushPromises()
 
     expect(router.currentRoute.value.path).toBe('/elsewhere')
+  })
+
+  it('marks the login link for the large tap target', async () => {
+    const { wrapper } = await mountAt(RegisterView, '/register')
+
+    expect(wrapper.get('a[href^="/login"]').element.parentElement?.classList.contains('auth-switch')).toBe(true)
   })
 
   it('links to login with the same redirect target', async () => {
