@@ -100,6 +100,7 @@ function logout() {
   font-size: 1.05rem;
   color: var(--ice);
   text-decoration: none;
+  min-height: 2.75rem;
 }
 .links {
   display: flex;
@@ -107,10 +108,12 @@ function logout() {
   gap: 1.25rem;
 }
 .links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
   text-decoration: none;
   color: var(--nav-muted);
   font-weight: 500;
-  padding: 0.2rem 0;
 }
 .links a:hover,
 .links a.router-link-active {

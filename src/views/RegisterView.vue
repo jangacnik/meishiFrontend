@@ -143,7 +143,7 @@ async function submit() {
         <Message v-if="error" severity="error">{{ error }}</Message>
         <Button type="submit" label="Register" :loading="loading" fluid />
       </form>
-      <p class="muted">Already registered? <RouterLink :to="{ name: 'login', query: { redirect: route.query.redirect } }">Log in</RouterLink></p>
+      <p class="muted auth-switch">Already registered? <RouterLink :to="{ name: 'login', query: { redirect: route.query.redirect } }">Log in</RouterLink></p>
     </div>
   </div>
 </template>
