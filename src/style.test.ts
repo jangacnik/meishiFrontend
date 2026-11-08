@@ -22,3 +22,9 @@ describe('tap targets', () => {
     expect(app).toMatch(/\.links a\s*\{[^}]*min-height:\s*2\.75rem/)
   })
 })
+
+describe('heading focus', () => {
+  it('draws no focus outline on a heading that only receives focus from the router', () => {
+    expect(styles).toMatch(/h1\[tabindex='-1'\]:focus(-visible)?[^{]*\{[^}]*outline:\s*none/)
+  })
+})
