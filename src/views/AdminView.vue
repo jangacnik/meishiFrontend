@@ -5,7 +5,7 @@ import Column from 'primevue/column'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import InputText from 'primevue/inputtext'
-import Password from 'primevue/password'
+import PasswordInput from '../components/PasswordInput.vue'
 import Select from 'primevue/select'
 import Tag from 'primevue/tag'
 import Message from 'primevue/message'
@@ -483,11 +483,10 @@ onMounted(refresh)
         <Message v-if="passwordError" severity="error">{{ passwordError }}</Message>
         <div class="field">
           <label for="newUserPassword">New password</label>
-          <Password
+          <PasswordInput
             v-model="newPassword"
             input-id="newUserPassword"
             :feedback="false"
-            toggle-mask
             fluid
             :input-props="{ autocomplete: 'new-password', autofocus: true }"
           />

@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
-import Password from 'primevue/password'
+import PasswordInput from '../components/PasswordInput.vue'
 import Message from 'primevue/message'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
@@ -283,11 +283,10 @@ onMounted(load)
 
       <div class="field">
         <label for="currentPassword">Current password</label>
-        <Password
+        <PasswordInput
           v-model="currentPassword"
           input-id="currentPassword"
           :feedback="false"
-          toggle-mask
           fluid
           :invalid="!!currentPasswordError"
           :input-props="{
@@ -303,11 +302,10 @@ onMounted(load)
       </div>
       <div class="field">
         <label for="newPassword">New password</label>
-        <Password
+        <PasswordInput
           v-model="newPassword"
           input-id="newPassword"
           :feedback="false"
-          toggle-mask
           fluid
           :invalid="!!newPasswordError"
           :input-props="{
@@ -323,11 +321,10 @@ onMounted(load)
       </div>
       <div class="field">
         <label for="confirmPassword">Confirm new password</label>
-        <Password
+        <PasswordInput
           v-model="confirmPassword"
           input-id="confirmPassword"
           :feedback="false"
-          toggle-mask
           fluid
           :invalid="!!confirmPasswordError"
           :input-props="{

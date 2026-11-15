@@ -1,8 +1,9 @@
-import { describe, expect, it } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { afterEach, describe, expect, it } from 'vitest'
+import { enableAutoUnmount, mount } from '@vue/test-utils'
 import PrimeVue from 'primevue/config'
 import AppIcon, { type IconName } from './AppIcon.vue'
 import BrandMark from './BrandMark.vue'
+import PasswordInput from './PasswordInput.vue'
 import UserActions from './UserActions.vue'
 import type { UserSummary } from '../lib/api'
 
@@ -100,5 +101,39 @@ describe('UserActions', () => {
     const wrapper = mountActions({}, { busy: true })
 
     expect(wrapper.findAll('button').every((b) => b.attributes('disabled') !== undefined)).toBe(true)
+  })
+})
+
+describe('PasswordInput', () => {
+  enableAutoUnmount(afterEach)
+
+  const mountInput = () =>
+    mount(PasswordInput, {
+      props: { inputId: 'pw', modelValue: 'secret' },
+      global: { plugins: [PrimeVue] },
+      attachTo: document.body,
+    })
+
+  it('renders the show/hide control as a labelled button that is not a form submitter', async () => {
+    const wrapper = mountInput()
+    const toggle = wrapper.get('button.password-toggle')
+    expect(toggle.attributes('type')).toBe('button')
+    expect(toggle.attributes('aria-label')).toBe('Show password')
+    expect(toggle.attributes('aria-pressed')).toBe('false')
+  })
+
+  it('reveals and hides the password, reflecting the state in aria-pressed', async () => {
+    const wrapper = mountInput()
+    expect(wrapper.get('input').attributes('type')).toBe('password')
+
+    await wrapper.get('button.password-toggle').trigger('click')
+    expect(wrapper.get('input').attributes('type')).toBe('text')
+    expect(wrapper.get('button.password-toggle').attributes('aria-pressed')).toBe('true')
+    expect(document.activeElement).toBe(wrapper.get('button.password-toggle').element)
+
+    await wrapper.get('button.password-toggle').trigger('click')
+    expect(wrapper.get('input').attributes('type')).toBe('password')
+    expect(wrapper.get('button.password-toggle').attributes('aria-pressed')).toBe('false')
+    expect(document.activeElement).toBe(wrapper.get('button.password-toggle').element)
   })
 })

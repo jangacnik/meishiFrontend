@@ -2,7 +2,7 @@
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import InputText from 'primevue/inputtext'
-import Password from 'primevue/password'
+import PasswordInput from '../components/PasswordInput.vue'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
 import { errorMessage } from '../lib/messages'
@@ -78,11 +78,10 @@ async function submit() {
         </div>
         <div class="field">
           <label for="password">Password</label>
-          <Password
+          <PasswordInput
             v-model="password"
             input-id="password"
             :feedback="false"
-            toggle-mask
             fluid
             :invalid="!!passwordError"
             :input-props="{

@@ -21,6 +21,11 @@ describe('tap targets', () => {
     expect(app).toMatch(/\.brand\s*\{[^}]*min-height:\s*2\.75rem/)
     expect(app).toMatch(/\.links a\s*\{[^}]*min-height:\s*2\.75rem/)
   })
+
+  it('makes the password show/hide button a 44px target', () => {
+    expect(styles).toMatch(/\.password-toggle\s*\{[^}]*width:\s*2\.75rem/)
+    expect(styles).toMatch(/\.p-password:has\(\.password-toggle\)[^{]*\{[^}]*padding-inline-end:\s*2\.75rem/)
+  })
 })
 
 describe('heading focus', () => {

@@ -321,6 +321,27 @@ code {
   min-height: 2.75rem;
 }
 
+/* The show/hide password control is a real button: 44px target, vertically centred in the field. */
+.password-toggle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  inset-inline-end: 0;
+  width: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.p-password:has(.password-toggle) .p-password-input {
+  padding-inline-end: 2.75rem;
+}
+
 /* The "Register" / "Log in" link under each auth form is inline text; make it a 44px target. */
 .auth-switch {
   display: flex;

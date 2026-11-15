@@ -11,6 +11,8 @@ export type IconName =
   | 'pencil'
   | 'x'
   | 'key'
+  | 'eye'
+  | 'eye-off'
 
 withDefaults(defineProps<{ name: IconName; size?: number }>(), { size: 14 })
 
@@ -26,6 +28,8 @@ const PATHS: Record<IconName, string[]> = {
   pencil: ['M4 20 L4 17 L15 6 a2.121 2.121 0 0 1 3 3 L7 20 H4', 'M13 8 L16 11'],
   x: ['M6 6 L18 18', 'M18 6 L6 18'],
   key: ['M15 9 a3 3 0 1 1-6 0 a3 3 0 0 1 6 0', 'M12.5 11.5 L4 20 V17 H7 V14 H10'],
+  eye: ['M2 12 C5 6 8.5 5 12 5 s7 1 10 7 c-3 6-6.5 7-10 7 s-7-1-10-7', 'M15 12 a3 3 0 1 0-6 0 a3 3 0 0 0 6 0'],
+  'eye-off': ['M2 12 C5 6 8.5 5 12 5 s7 1 10 7 c-3 6-6.5 7-10 7 s-7-1-10-7', 'M15 12 a3 3 0 1 0-6 0 a3 3 0 0 0 6 0', 'M4 4 L20 20'],
 }
 </script>
 
