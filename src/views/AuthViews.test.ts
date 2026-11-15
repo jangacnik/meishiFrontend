@@ -13,6 +13,7 @@ vi.mock('../lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../lib/api')>()),
   login: vi.fn(),
   register: vi.fn(),
+  getOAuthClient: vi.fn(),
 }))
 
 import * as api from '../lib/api'
@@ -153,6 +154,54 @@ describe('LoginView', () => {
     const { wrapper } = await mountAt(LoginView, '/login?expired=1')
 
     expect(wrapper.text()).toContain('Session expired. Log in again.')
+  })
+})
+
+const authorizePath =
+  '/oauth/authorize?response_type=code&client_id=omiyage&redirect_uri=https%3A%2F%2Fomiyage.example%2Fauth%2Fcallback&state=s1&code_challenge=c&code_challenge_method=S256'
+
+describe('cancel link to the app that asked for the login', () => {
+  it.each([
+    ['login', LoginView, '/login'],
+    ['register', RegisterView, '/register'],
+  ])('shows on the %s page once Meishi has validated the client and redirect uri', async (_name, view, path) => {
+    vi.mocked(api.getOAuthClient).mockResolvedValue({ clientId: 'omiyage', name: 'Omiyage' })
+    const { wrapper } = await mountAt(view, `${path}?redirect=${encodeURIComponent(authorizePath)}`)
+    await flushPromises()
+
+    const link = wrapper.get('.oauth-cancel a')
+    expect(link.text()).toBe('Cancel and go back to Omiyage')
+    expect(link.attributes('href')).toBe('https://omiyage.example/auth/callback?error=access_denied&state=s1')
+    expect(api.getOAuthClient).toHaveBeenCalledWith({
+      client_id: 'omiyage',
+      redirect_uri: 'https://omiyage.example/auth/callback',
+    })
+  })
+
+  it('does not show when Meishi rejects the client or redirect uri', async () => {
+    vi.mocked(api.getOAuthClient).mockRejectedValue(new ApiError('invalid_redirect_uri', 400))
+    const { wrapper } = await mountAt(LoginView, `/login?redirect=${encodeURIComponent(authorizePath)}`)
+    await flushPromises()
+
+    expect(wrapper.find('.oauth-cancel').exists()).toBe(false)
+  })
+
+  it('does not show, and asks nothing, for an ordinary redirect', async () => {
+    vi.mocked(api.getOAuthClient).mockReset()
+    const { wrapper } = await mountAt(LoginView, '/login?redirect=/elsewhere')
+    await flushPromises()
+
+    expect(wrapper.find('.oauth-cancel').exists()).toBe(false)
+    expect(api.getOAuthClient).not.toHaveBeenCalled()
+  })
+
+  it('does not show a link that would leave through a non-http scheme', async () => {
+    vi.mocked(api.getOAuthClient).mockResolvedValue({ clientId: 'omiyage', name: 'Omiyage' })
+    const bad = '/oauth/authorize?client_id=omiyage&redirect_uri=javascript%3Aalert(1)&state=s'
+    const { wrapper } = await mountAt(LoginView, `/login?redirect=${encodeURIComponent(bad)}`)
+    await flushPromises()
+
+    expect(wrapper.find('.oauth-cancel').exists()).toBe(false)
   })
 })
 

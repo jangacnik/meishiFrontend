@@ -12,7 +12,7 @@ function signIn(role: 'USER' | 'ADMIN') {
   localStorage.setItem('meishi.token', `h.${btoa(JSON.stringify(claims))}.s`)
 }
 
-async function mountApp(role?: 'USER' | 'ADMIN') {
+async function mountApp(role?: 'USER' | 'ADMIN', startAt = '/') {
   localStorage.clear()
   if (role) signIn(role)
   setActivePinia(createPinia())
@@ -21,10 +21,11 @@ async function mountApp(role?: 'USER' | 'ADMIN') {
     routes: [
       { path: '/', component: { template: '<p>home page</p>' } },
       { path: '/login', component: { template: '<p>login page</p>' } },
+      { path: '/register', component: { template: '<p>register page</p>' } },
       { path: '/admin', component: { template: '<p>admin page</p>' } },
     ],
   })
-  await router.push('/')
+  await router.push(startAt)
   await router.isReady()
   const wrapper = mount(App, { global: { plugins: [PrimeVue, ConfirmationService, ToastService, router] } })
   return { wrapper, router }
@@ -41,6 +42,15 @@ describe('App shell', () => {
 
     expect(linkTexts(wrapper)).toEqual(['Log in', 'Register'])
     expect(wrapper.text()).toContain('home page')
+  })
+
+  it('keeps the redirect on the guest links of the login page', async () => {
+    const { wrapper } = await mountApp(undefined, '/login?redirect=%2Foauth%2Fauthorize%3Fclient_id%3Da')
+
+    expect(wrapper.findAll('nav.links-desktop a').map((a) => a.attributes('href'))).toEqual([
+      '/login?redirect=/oauth/authorize?client_id=a',
+      '/register?redirect=/oauth/authorize?client_id=a',
+    ])
   })
 
   it('shows the account link and log out for members, without the admin link', async () => {

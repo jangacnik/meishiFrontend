@@ -7,6 +7,7 @@ import Button from 'primevue/button'
 import Message from 'primevue/message'
 import { errorMessage } from '../lib/messages'
 import BrandMark from '../components/BrandMark.vue'
+import OAuthCancelLink from '../components/OAuthCancelLink.vue'
 import { useAuthStore } from '../stores/auth'
 import { localPath } from '../lib/navigation'
 
@@ -144,6 +145,7 @@ async function submit() {
         <Button type="submit" label="Register" :loading="loading" fluid />
       </form>
       <p class="muted auth-switch">Already registered? <RouterLink :to="{ name: 'login', query: { redirect: route.query.redirect } }">Log in</RouterLink></p>
+      <OAuthCancelLink :redirect="route.query.redirect" />
     </div>
   </div>
 </template>

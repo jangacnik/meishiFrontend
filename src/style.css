@@ -346,3 +346,13 @@ code {
     min-width: 2.75rem;
   }
 }
+
+.oauth-cancel {
+  margin: 0;
+}
+
+.oauth-cancel a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+}

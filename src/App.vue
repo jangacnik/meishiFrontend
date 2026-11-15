@@ -14,6 +14,12 @@ const mainEl = useTemplateRef('main')
 
 watch(() => route.fullPath, () => (menuOpen.value = false))
 
+/** The guest links keep the page's `redirect`, so signing up from a hosted login still ends back at the app. */
+function withRedirect(path: string) {
+  const redirect = route.query.redirect
+  return typeof redirect === 'string' ? { path, query: { redirect } } : path
+}
+
 function logout() {
   auth.logout()
   menuOpen.value = false
@@ -39,8 +45,8 @@ function logout() {
           <button type="button" class="ghost" @click="logout">Log out</button>
         </template>
         <template v-else>
-          <RouterLink to="/login">Log in</RouterLink>
-          <RouterLink to="/register">Register</RouterLink>
+          <RouterLink :to="withRedirect('/login')">Log in</RouterLink>
+          <RouterLink :to="withRedirect('/register')">Register</RouterLink>
         </template>
       </nav>
 
@@ -65,8 +71,8 @@ function logout() {
         <button type="button" class="ghost" @click="logout">Log out</button>
       </template>
       <template v-else>
-        <RouterLink to="/login" @click="menuOpen = false">Log in</RouterLink>
-        <RouterLink to="/register" @click="menuOpen = false">Register</RouterLink>
+        <RouterLink :to="withRedirect('/login')" @click="menuOpen = false">Log in</RouterLink>
+        <RouterLink :to="withRedirect('/register')" @click="menuOpen = false">Register</RouterLink>
       </template>
     </nav>
   </header>
