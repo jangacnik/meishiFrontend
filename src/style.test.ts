@@ -13,6 +13,11 @@ describe('tap targets', () => {
     expect(styles).toMatch(/\.p-inputtext\s*\{[^}]*min-height:\s*2\.75rem/)
   })
 
+  it('gives form submit buttons a 44px minimum height at every width', () => {
+    const outsideMedia = styles.replace(/@media[^{]*\{(?:[^{}]*\{[^}]*\})*[^}]*\}/g, '')
+    expect(outsideMedia).toMatch(/\.p-button\[type='submit'\]\s*\{[^}]*min-height:\s*2\.75rem/)
+  })
+
   it('gives the inline switch links under the auth forms a 44px minimum height', () => {
     expect(styles).toMatch(/\.auth-switch a\s*\{[^}]*min-height:\s*2\.75rem/)
   })

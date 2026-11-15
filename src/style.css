@@ -358,6 +358,11 @@ code {
   padding: 0 0.35rem;
 }
 
+/* Form submit buttons sit under 44px inputs, so they match at every width, not only on mobile. */
+.p-button[type='submit'] {
+  min-height: 2.75rem;
+}
+
 @media (max-width: 640px) {
   .p-button,
   .p-select {
