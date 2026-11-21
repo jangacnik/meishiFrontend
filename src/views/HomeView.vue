@@ -192,7 +192,7 @@ onMounted(load)
         <h2>Ready to shop?</h2>
         <p class="muted">Omiyage is where you browse and request souvenirs to bring back.</p>
       </div>
-      <Button as="a" class="icon-btn" href="https://omiyage.gacnikhome.duckdns.org" target="_blank" rel="noopener">
+      <Button as="a" class="icon-btn" href="https://omiyage.gacnik.dev" target="_blank" rel="noopener">
         Shop at Omiyage
         <span class="sr-only">(opens in new tab)</span>
         <AppIcon name="arrow-up-right" :size="15" />
